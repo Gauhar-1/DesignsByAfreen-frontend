@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Instagram, Twitter, Facebook } from 'lucide-react';
+import { Instagram, Twitter, Facebook, Shield } from 'lucide-react';
 import Logo from '@/components/icons/Logo';
 import Container from '@/components/layout/Container';
 
@@ -31,6 +31,12 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
           <p>&copy; {currentYear} Designs by Afreen. All rights reserved.</p>
+          <div className="mt-2">
+            <Link href="/admin" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center">
+              <Shield className="h-3 w-3 mr-1" />
+              Admin Panel
+            </Link>
+          </div>
         </div>
       </Container>
     </footer>
