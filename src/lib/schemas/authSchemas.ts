@@ -30,3 +30,9 @@ export const signupSchema = signupObjectSchema.refine(validatePasswords, {
   path: ['confirmPassword'], // Path of error
 });
 export type SignupInput = z.infer<typeof signupSchema>;
+
+// Forgot Password Schema
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address. Please enter a valid email to reset your password.'),
+});
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
