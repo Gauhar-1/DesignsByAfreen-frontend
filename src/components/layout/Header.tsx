@@ -1,11 +1,13 @@
+
 'use client';
 import Link from 'next/link';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
+// import { useAuth } from '@/context/AuthContext'; // Placeholder for auth state
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -17,6 +19,8 @@ const navItems = [
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  // const { user, logout } = useAuth(); // Placeholder
+  const user = null; // Replace with actual user state
 
   useEffect(() => {
     setIsMounted(true);
@@ -28,7 +32,31 @@ export default function Header() {
   };
 
   if (!isMounted) {
-    return null; 
+    // Render a basic layout or null during SSR/SSG to avoid hydration issues with client-side state
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <Container className="py-4">
+          <div className="flex items-center justify-between">
+            <Logo />
+            {/* Basic structure for SSR or when not mounted */}
+            <div className="hidden md:flex items-center space-x-2">
+              <Button variant="ghost" size="icon" aria-label="Cart">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+              </Button>
+              <Button variant="outline" size="sm">Login</Button>
+            </div>
+            <div className="md:hidden flex items-center">
+              <Button variant="ghost" size="icon" aria-label="Cart" className="mr-2">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Toggle menu">
+                <Menu className="h-6 w-6 text-primary" />
+              </Button>
+            </div>
+          </div>
+        </Container>
+      </header>
+    );
   }
 
   return (
@@ -36,7 +64,7 @@ export default function Header() {
       <Container className="py-4">
         <div className="flex items-center justify-between">
           <Logo />
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             {navItems.map((item) => (
               <Link
                 key={item.label}
@@ -51,6 +79,32 @@ export default function Header() {
                 <ShoppingCart className="h-5 w-5 text-primary" />
               </Button>
             </Link>
+            {user ? (
+              <>
+                {/* <Link href="/profile" passHref>
+                  <Button variant="ghost" size="sm">
+                    <User className="h-5 w-5 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm" onClick={async () => await logoutUserAction()}>Logout</Button> */}
+                <span className="text-sm">Welcome, User!</span> 
+                <Button variant="outline" size="sm">Logout</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/login">
+                    <LogIn className="h-4 w-4 mr-2" /> Login
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/signup">
+                     <UserPlus className="h-4 w-4 mr-2" /> Sign Up
+                  </Link>
+                </Button>
+              </>
+            )}
           </nav>
           <div className="md:hidden flex items-center">
              <Link href="/cart" passHref>
@@ -76,6 +130,24 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
+              <hr className="my-2 border-border" />
+              {user ? (
+                <>
+                  {/* <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-foreground hover:text-primary transition-colors py-2">Profile</Link>
+                  <Button variant="outline" className="w-full" onClick={async () => { await logoutUserAction(); setIsMobileMenuOpen(false); }}>Logout</Button> */}
+                   <span className="block text-base font-medium text-foreground py-2">Welcome, User!</span>
+                   <Button variant="outline" className="w-full">Logout</Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-foreground hover:text-primary transition-colors py-2">
+                    <LogIn className="h-5 w-5 mr-2 inline-block" />Login
+                  </Link>
+                  <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-foreground hover:text-primary transition-colors py-2">
+                    <UserPlus className="h-5 w-5 mr-2 inline-block" />Sign Up
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         )}
