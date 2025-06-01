@@ -15,6 +15,7 @@ import { signupUser } from '@/actions/authActions';
 import { signupSchema, type SignupInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Sign Up - Atelier Luxe',
@@ -24,6 +25,7 @@ import { Loader2, UserPlus } from 'lucide-react';
 export default function SignupPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -48,6 +50,7 @@ export default function SignupPage() {
         // TODO: Handle successful signup (e.g., redirect to login or auto-login)
         console.log('User ID:', result.userId);
         form.reset();
+        router.push('/'); // Navigate to home page
       } else {
         toast({
           title: 'Signup Failed',

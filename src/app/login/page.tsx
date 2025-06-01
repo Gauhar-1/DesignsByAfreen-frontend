@@ -15,6 +15,7 @@ import { loginUser } from '@/actions/authActions';
 import { loginSchema, type LoginInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, LogIn } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Login - Atelier Luxe',
@@ -24,6 +25,7 @@ import { Loader2, LogIn } from 'lucide-react';
 export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -42,9 +44,10 @@ export default function LoginPage() {
           title: 'Login Successful',
           description: result.message,
         });
-        // TODO: Handle successful login (e.g., redirect, store token)
+        // TODO: Handle successful login (e.g., store token)
         console.log('Token:', result.token);
         form.reset();
+        router.push('/'); // Navigate to home page
       } else {
         toast({
           title: 'Login Failed',
