@@ -1,6 +1,5 @@
 'use client'; // For form handling
 
-import type { Metadata } from 'next'; // Static metadata for client component
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -16,11 +15,9 @@ import { ChevronLeft, CreditCard, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
-// Static metadata for client component
-export const metadata: Metadata = {
-  title: 'Checkout - Atelier Luxe',
-  description: 'Complete your purchase at Atelier Luxe. Enter your shipping and payment details.',
-};
+// Removed metadata export as it's not allowed in client components.
+// If static metadata is needed, it should be defined in a parent layout or page.
+// If dynamic metadata is needed, consider using the `next/head` component within the return statement.
 
 const addressFormSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
