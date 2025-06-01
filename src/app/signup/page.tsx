@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Container from '@/components/layout/Container';
 import { useToast } from '@/hooks/use-toast';
-import { signupUser, signupSchema, type SignupInput } from '@/actions/authActions';
+import { signupUser } from '@/actions/authActions';
+import { signupSchema, type SignupInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, UserPlus } from 'lucide-react';
 
