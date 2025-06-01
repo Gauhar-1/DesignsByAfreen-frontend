@@ -2,6 +2,7 @@
 'use client'; // For form handling
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, CreditCard, Lock, DollarSign, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, DollarSign, Lock, Paperclip, QrCode, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
@@ -27,8 +28,32 @@ const addressFormSchema = z.object({
   country: z.string().min(2, 'Country is required.'),
   email: z.string().email('Invalid email address.'),
   phone: z.string().min(7, 'Phone number is required.'),
-  paymentMethod: z.enum(['card', 'paypal', 'wallet']).default('card'),
-});
+  paymentMethod: z.enum(['cod', 'upi']).default('cod'),
+  upiReferenceNumber: z.string().optional(),
+  paymentScreenshotUri: z.string().optional().describe("Payment screenshot as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+}).refine(
+  (data) => {
+    if (data.paymentMethod === 'upi') {
+      return !!data.upiReferenceNumber && data.upiReferenceNumber.trim() !== '';
+    }
+    return true;
+  },
+  {
+    message: 'Transaction reference number is required for UPI/QR payments.',
+    path: ['upiReferenceNumber'],
+  }
+).refine(
+  (data) => {
+    if (data.paymentMethod === 'upi') {
+      return !!data.paymentScreenshotUri;
+    }
+    return true;
+  },
+  {
+    message: 'Payment screenshot is required for UPI/QR payments.',
+    path: ['paymentScreenshotUri'],
+  }
+);
 
 type AddressFormValues = z.infer<typeof addressFormSchema>;
 
@@ -48,7 +73,7 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('card');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cod');
 
   useEffect(() => {
     setIsMounted(true);
@@ -57,23 +82,70 @@ export default function CheckoutPage() {
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
     defaultValues: {
-      fullName: '', addressLine1: '', city: '', state: '', zipCode: '', country: '', email: '', phone: '', paymentMethod: 'card',
+      fullName: '', addressLine1: '', city: '', state: '', zipCode: '', country: '', email: '', phone: '', 
+      paymentMethod: 'cod', 
+      upiReferenceNumber: '', 
+      paymentScreenshotUri: undefined,
     },
   });
+
+  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: 'File too large',
+          description: 'Please upload an image smaller than 5MB.',
+          variant: 'destructive',
+        });
+        form.setValue('paymentScreenshotUri', undefined);
+        event.target.value = ''; // Reset file input
+        return;
+      }
+      try {
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        form.setValue('paymentScreenshotUri', dataUri);
+      } catch (error) {
+        console.error("Error converting file to data URI:", error);
+        form.setValue('paymentScreenshotUri', undefined);
+        event.target.value = ''; // Reset file input
+        toast({
+          title: 'Error uploading image',
+          description: 'Could not process the image file. Please try another.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      form.setValue('paymentScreenshotUri', undefined);
+    }
+  };
+
 
   async function onSubmit(data: AddressFormValues) {
     setIsSubmitting(true);
     console.log('Checkout data:', data);
+    if (data.paymentMethod === 'upi') {
+      console.log('UPI Reference:', data.upiReferenceNumber);
+      console.log('Screenshot URI (first 100 chars):', data.paymentScreenshotUri?.substring(0,100) + '...');
+    }
     // Simulate order placement
     await new Promise(resolve => setTimeout(resolve, 2000));
     toast({
       title: 'Order Placed!',
       description: 'Thank you for your purchase. Your order confirmation will be sent to your email.',
     });
-    // Redirect to an order confirmation page or clear cart (not implemented here)
     setIsSubmitting(false);
     form.reset();
-    setSelectedPaymentMethod('card'); // Reset payment method selection
+    setSelectedPaymentMethod('cod');
+     const fileInput = document.getElementById('paymentScreenshotUri') as HTMLInputElement | null;
+      if (fileInput) {
+        fileInput.value = '';
+      }
   }
 
   if (!isMounted) {
@@ -145,30 +217,20 @@ export default function CheckoutPage() {
                           >
                             <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
                               <FormControl>
-                                <RadioGroupItem value="card" />
+                                <RadioGroupItem value="cod" />
                               </FormControl>
                               <FormLabel className="font-normal flex-grow cursor-pointer text-base">
-                                <CreditCard className="inline-block mr-2 h-5 w-5 text-muted-foreground" />
-                                Credit or Debit Card
+                                <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" />
+                                Cash on Delivery (COD)
                               </FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
                               <FormControl>
-                                <RadioGroupItem value="paypal" />
+                                <RadioGroupItem value="upi" />
                               </FormControl>
                               <FormLabel className="font-normal flex-grow cursor-pointer text-base">
-                                {/* Placeholder for PayPal icon */}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="inline-block mr-2 text-muted-foreground"><path d="M7.539 18.5L6 10.071h3.063c3.806 0 5.665-1.388 5.665-4.214C14.728 3.094 13.026 2 10.21 2H3.22l2.48 11.071H2.798L0 22h7.687l-.148-1.5zM10.596 3.732c.99 0 1.65.552 1.65 1.828 0 1.388-.991 1.972-2.313 1.972h-1.22L9.674 3.732h.922zm12.924 10.132L21.771 8H17.88l-.751 3.642c-.183.903-.367 1.805-.551 2.708h.138c.386-.963.735-1.888 1.047-2.708L19.482 8h-2.779l-1.837 10.037h3.126l.349-1.678h.128c.184.944.772 1.678 1.58 1.678.625 0 1.148-.257 1.498-.753l.034.753H24l-.48-3.864z"/></svg>
-                                PayPal
-                              </FormLabel>
-                            </FormItem>
-                             <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                              <FormControl>
-                                <RadioGroupItem value="wallet" />
-                              </FormControl>
-                              <FormLabel className="font-normal flex-grow cursor-pointer text-base">
-                                <ShieldCheck className="inline-block mr-2 h-5 w-5 text-muted-foreground" />
-                                Digital Wallet (Apple Pay, Google Pay)
+                                <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" />
+                                QR / UPI Payment
                               </FormLabel>
                             </FormItem>
                           </RadioGroup>
@@ -178,48 +240,59 @@ export default function CheckoutPage() {
                     )}
                   />
 
-                  {/* Conditional rendering for payment details based on selection */}
-                  {selectedPaymentMethod === 'card' && (
+                  {selectedPaymentMethod === 'cod' && (
                     <div className="space-y-4 pt-4 border-t">
-                       <p className="text-sm text-muted-foreground">Enter your card details:</p>
-                       <div>
-                        <Label htmlFor="cardNumber">Card Number</Label>
-                        <Input id="cardNumber" placeholder="•••• •••• •••• ••••" disabled className="bg-muted/30"/>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="expiryDate">Expiry Date</Label>
-                          <Input id="expiryDate" placeholder="MM/YY" disabled className="bg-muted/30"/>
-                        </div>
-                        <div>
-                          <Label htmlFor="cvc">CVC</Label>
-                          <Input id="cvc" placeholder="•••" disabled className="bg-muted/30"/>
-                        </div>
-                      </div>
+                       <p className="text-muted-foreground">You will pay the delivery person when your order arrives.</p>
                     </div>
                   )}
 
-                  {selectedPaymentMethod === 'paypal' && (
-                    <div className="space-y-4 pt-4 border-t text-center">
-                      <p className="text-muted-foreground">You will be redirected to PayPal to complete your payment.</p>
-                      <Button variant="outline" disabled className="bg-blue-600 hover:bg-blue-700 text-white">
-                        Proceed to PayPal (Placeholder)
-                      </Button>
+                  {selectedPaymentMethod === 'upi' && (
+                    <div className="space-y-6 pt-4 border-t">
+                       <p className="text-sm text-muted-foreground">Scan the QR code or use the UPI ID below to make your payment. Then, enter the transaction reference number and upload a screenshot of your payment.</p>
+                       <div className="flex flex-col items-center gap-4">
+                          <Image src="https://placehold.co/200x200.png" alt="UPI QR Code" width={150} height={150} data-ai-hint="qr code" className="rounded-md border" />
+                          <p className="font-semibold text-lg">UPI ID: <span className="text-primary font-mono">atelierluxe@exampleupi</span></p>
+                       </div>
+                        <FormField
+                            control={form.control}
+                            name="upiReferenceNumber"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Transaction Reference Number</FormLabel>
+                                <FormControl>
+                                <Input placeholder="Enter your payment reference ID" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="paymentScreenshotUri"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center">
+                                  <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
+                                  Upload Payment Screenshot (max 5MB)
+                                </FormLabel>
+                                <FormControl>
+                                <Input
+                                    id="paymentScreenshotUri"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleScreenshotUpload}
+                                    className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
                     </div>
                   )}
-
-                   {selectedPaymentMethod === 'wallet' && (
-                    <div className="space-y-4 pt-4 border-t text-center">
-                      <p className="text-muted-foreground">Follow the prompts from your digital wallet provider.</p>
-                      <Button variant="outline" disabled className="bg-black hover:bg-gray-800 text-white">
-                        Pay with Digital Wallet (Placeholder)
-                      </Button>
-                    </div>
-                  )}
-
                   <div className="flex items-center text-sm text-muted-foreground pt-4">
                     <Lock className="h-4 w-4 mr-2" />
-                    <span>Your payment information is secure.</span>
+                    <span>Your personal information is secure.</span>
                   </div>
                 </CardContent>
               </Card>
@@ -265,5 +338,5 @@ export default function CheckoutPage() {
       </Form>
     </Container>
   );
-}
 
+    
