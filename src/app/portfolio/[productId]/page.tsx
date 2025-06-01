@@ -1,3 +1,4 @@
+
 import type { Metadata, ResolvingMetadata } from 'next';
 import Image from 'next/image';
 import { mockPortfolioItems, Product } from '@/lib/mockData';
@@ -18,11 +19,11 @@ export async function generateMetadata(
   const product = mockPortfolioItems.find(p => p.id === params.productId);
   if (!product) {
     return {
-      title: 'Product Not Found - Atelier Luxe',
+      title: 'Product Not Found - Designs by Afreen',
     };
   }
   return {
-    title: `${product.name} - Atelier Luxe`,
+    title: `${product.name} - Designs by Afreen`,
     description: product.description || `Details for ${product.name}.`,
   };
 }

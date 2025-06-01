@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ export default function HeroSection() {
               Discover Your Signature Style
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-foreground/80 max-w-xl mx-auto md:mx-0">
-              Experience bespoke fashion that tells your story. Atelier Luxe offers unique, handcrafted designs tailored to your individuality and elegance.
+              Experience bespoke fashion that tells your story. Designs by Afreen offers unique, handcrafted designs tailored to your individuality and elegance.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Button asChild size="lg" className="text-lg py-7 px-10">
@@ -27,7 +28,7 @@ export default function HeroSection() {
           <div className="relative aspect-square md:aspect-[4/5] max-h-[70vh] rounded-lg overflow-hidden shadow-2xl order-first md:order-last">
             <Image
               src="https://placehold.co/800x1000.png" 
-              alt="Elegant fashion model showcasing Atelier Luxe design"
+              alt="Elegant fashion model showcasing Designs by Afreen design"
               fill
               priority
               className="object-cover"

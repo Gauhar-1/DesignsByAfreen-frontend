@@ -1,9 +1,10 @@
+
 import type { Metadata } from 'next';
 import Container from '@/components/layout/Container';
 import TrendingStylesForm from '@/components/pages/trending-styles/TrendingStylesForm';
 
 export const metadata: Metadata = {
-  title: 'Trending Style Suggestions - Atelier Luxe',
+  title: 'Trending Style Suggestions - Designs by Afreen',
   description: 'Get AI-powered trending style suggestions tailored to your preferences and the current season.',
 };
 

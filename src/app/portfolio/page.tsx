@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { mockPortfolioItems, Product } from '@/lib/mockData';
 import ProductCard from '@/components/shared/ProductCard';
@@ -6,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Portfolio - Atelier Luxe',
-  description: 'Explore the exquisite collections and designs by Atelier Luxe. Filter by category to find your perfect piece.',
+  title: 'Portfolio - Designs by Afreen',
+  description: 'Explore the exquisite collections and designs by Designs by Afreen. Filter by category to find your perfect piece.',
 };
 
 const categories = ['All', 'Bridal', 'Casual', 'Festive', 'Outerwear'];

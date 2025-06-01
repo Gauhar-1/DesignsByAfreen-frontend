@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import Container from '@/components/layout/Container';
 import ContactForm from '@/components/pages/contact/ContactForm';
@@ -6,8 +7,8 @@ import { Mail, Phone, MapPin, Instagram, Twitter, Facebook, MessageCircle } from
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Contact Us - Atelier Luxe',
-  description: 'Get in touch with Atelier Luxe for consultations, inquiries, or collaborations. Reach out via our contact form, email, or social media.',
+  title: 'Contact Us - Designs by Afreen',
+  description: 'Get in touch with Designs by Afreen for consultations, inquiries, or collaborations. Reach out via our contact form, email, or social media.',
 };
 
 export default function ContactPage() {
@@ -34,7 +35,7 @@ export default function ContactPage() {
                 <Mail className="h-6 w-6 mr-3 mt-1 text-accent flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold">Email</h3>
-                  <a href="mailto:info@atelierluxe.com" className="hover:text-primary transition-colors">info@atelierluxe.com</a>
+                  <a href="mailto:info@designsbyafreen.com" className="hover:text-primary transition-colors">info@designsbyafreen.com</a>
                 </div>
               </li>
               <li className="flex items-start">

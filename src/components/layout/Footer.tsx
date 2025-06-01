@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import Logo from '@/components/icons/Logo';
@@ -29,7 +30,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} Atelier Luxe. All rights reserved.</p>
+          <p>&copy; {currentYear} Designs by Afreen. All rights reserved.</p>
         </div>
       </Container>
     </footer>

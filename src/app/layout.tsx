@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -5,8 +6,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Atelier Luxe',
-  description: 'Modern clothing designer website.',
+  title: 'Designs by Afreen',
+  description: 'Modern clothing designs by Afreen.',
 };
 
 export default function RootLayout({
