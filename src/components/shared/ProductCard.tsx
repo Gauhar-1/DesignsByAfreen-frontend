@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '@/lib/mockData';
@@ -35,7 +36,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       <CardContent className="p-4 pt-0">
         <p className="text-lg font-semibold text-primary">{product.price}</p>
       </CardContent>
-      <CardFooter className="p-4 flex justify-between items-center">
+      <CardFooter className="p-4 flex justify-end items-center gap-2">
         <Button variant="outline" size="sm" aria-label="Add to Wishlist">
           <Heart className="h-4 w-4 mr-2" />
           Wishlist
