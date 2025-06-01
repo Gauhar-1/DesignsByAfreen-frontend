@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
+  email: z.string().email({ message: 'Please enter a valid email address.' }), // Note: Schema still expects email
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
 });
 
@@ -92,7 +92,7 @@ export default function ContactForm() {
             <FormItem>
               <FormLabel className="text-base">Phone Number</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="your.email@example.com" {...field} className="text-base py-3" />
+                <Input type="email" placeholder="e.g., (123) 456-7890" {...field} className="text-base py-3" />
               </FormControl>
               <FormMessage />
             </FormItem>
