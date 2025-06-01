@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react'; // Added import
+import { useState } from 'react';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -90,7 +90,7 @@ export default function ContactForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Email Address</FormLabel>
+              <FormLabel className="text-base">Phone Number</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="your.email@example.com" {...field} className="text-base py-3" />
               </FormControl>
