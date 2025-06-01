@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, DollarSign, Lock, Paperclip, QrCode, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const addressFormSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
@@ -74,6 +75,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cod');
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -146,6 +148,7 @@ export default function CheckoutPage() {
       if (fileInput) {
         fileInput.value = '';
       }
+    router.push('/');
   }
 
   if (!isMounted) {
@@ -269,7 +272,7 @@ export default function CheckoutPage() {
                         <FormField
                             control={form.control}
                             name="paymentScreenshotUri"
-                            render={({ field }) => (
+                            render={({ field }) => ( // field is not directly used for value/onChange for file input
                             <FormItem>
                                 <FormLabel className="flex items-center">
                                   <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -277,10 +280,10 @@ export default function CheckoutPage() {
                                 </FormLabel>
                                 <FormControl>
                                 <Input
-                                    id="paymentScreenshotUri"
+                                    id="paymentScreenshotUri" // ID for manual reset
                                     type="file"
                                     accept="image/*"
-                                    onChange={handleScreenshotUpload}
+                                    onChange={handleScreenshotUpload} // Use custom handler
                                     className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                 />
                                 </FormControl>
@@ -338,5 +341,4 @@ export default function CheckoutPage() {
       </Form>
     </Container>
   );
-
-    
+}
