@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Product } from '@/lib/mockData';
+import type { Product } from '@/lib/mockData';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart } from 'lucide-react';
@@ -36,13 +36,13 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       <CardContent className="p-4 pt-0">
         <p className="text-lg font-semibold text-primary">{product.price}</p>
       </CardContent>
-      <CardFooter className="p-4 flex justify-end items-center gap-2">
+      <CardFooter className="p-4 flex justify-end items-center gap-3">
         <Button variant="outline" size="sm" aria-label="Add to Wishlist">
-          <Heart className="h-4 w-4 mr-2" />
+          <Heart className="h-4 w-4" />
           Wishlist
         </Button>
         <Button size="sm" aria-label="Add to Cart">
-          <ShoppingCart className="h-4 w-4 mr-2" />
+          <ShoppingCart className="h-4 w-4" />
           Add to Cart
         </Button>
       </CardFooter>
