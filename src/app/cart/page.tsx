@@ -1,6 +1,5 @@
 'use client'; // This page requires client-side state for cart management
 
-import type { Metadata } from 'next'; // Metadata can still be defined, but it's static for client components like this.
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,12 +11,9 @@ import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
-// Static metadata for client component
-export const metadata: Metadata = {
-  title: 'Your Shopping Cart - Atelier Luxe',
-  description: 'Review items in your shopping cart, update quantities, and proceed to checkout.',
-};
-
+// Removed metadata export as it's not allowed in client components.
+// If static metadata is needed, it should be defined in a parent layout or page.
+// If dynamic metadata is needed, consider using the `next/head` component within the return statement.
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
