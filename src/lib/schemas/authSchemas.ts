@@ -36,3 +36,12 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address. Please enter a valid email to reset your password.'),
 });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+// Admin New User Schema
+export const adminNewUserSchema = z.object({
+  name: z.string().min(2, "Name is required."),
+  email: z.string().email("Invalid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  role: z.enum(["Customer", "Admin"]).default("Customer"),
+});
+export type AdminNewUserInput = z.infer<typeof adminNewUserSchema>;

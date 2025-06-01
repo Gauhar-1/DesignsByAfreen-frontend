@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { LoginInput, SignupInput, ForgotPasswordInput } from '@/lib/schemas/authSchemas';
+import type { LoginInput, SignupInput, ForgotPasswordInput, AdminNewUserInput } from '@/lib/schemas/authSchemas';
 
 export async function loginUser(data: LoginInput) {
   console.log('Server Action: Login attempt with phone number', data.phoneNumber);
@@ -42,4 +42,16 @@ export async function requestPasswordReset(data: ForgotPasswordInput) {
   // TODO: Implement actual Firebase sendPasswordResetEmail(auth, data.email);
   // For now, simulate success
   return { success: true, message: 'If an account with this email exists, a password reset link has been sent.' };
+}
+
+export async function adminCreateUser(data: AdminNewUserInput) {
+  console.log('Server Action: Admin attempting to create user:', data);
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // TODO: Implement actual Firebase Admin SDK user creation
+  // For now, let's simulate success
+  return { success: true, message: `User ${data.name} created successfully with role ${data.role}.` };
+  // Example failure:
+  // return { success: false, message: 'Failed to create user. Email might already exist.' };
 }
