@@ -4,16 +4,16 @@
 import type { LoginInput, SignupInput } from '@/lib/schemas/authSchemas';
 
 export async function loginUser(data: LoginInput) {
-  console.log('Server Action: Login attempt with', data.email);
+  console.log('Server Action: Login attempt with phone number', data.phoneNumber);
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // TODO: Implement actual Firebase login
+  // TODO: Implement actual Firebase login (this might require Firebase Phone Authentication)
   // For now, let's simulate a success or failure
   if (data.password === 'password') { // Mock success
     return { success: true, message: 'Logged in successfully!', token: 'mock-jwt-token' };
   } else {
-    return { success: false, message: 'Invalid email or password.' };
+    return { success: false, message: 'Invalid phone number or password.' };
   }
 }
 

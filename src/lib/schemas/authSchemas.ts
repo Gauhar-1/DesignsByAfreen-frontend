@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // Login Schema
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address.'),
+  phoneNumber: z.string().min(7, 'Phone number must be at least 7 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
