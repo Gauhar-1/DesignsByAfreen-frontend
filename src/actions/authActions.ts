@@ -10,13 +10,24 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-// Signup Schema
-export const signupSchema = z.object({
+// Base schema for signup form data
+const signupObjectSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Invalid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters.'),
-}).refine(data => data.password === data.confirmPassword, {
+});
+
+// Type for the data argument in the refine callback
+type SignupObjectInput = z.infer<typeof signupObjectSchema>;
+
+// Validation function for password confirmation
+const validatePasswords = (data: SignupObjectInput) => {
+  return data.password === data.confirmPassword;
+};
+
+// Signup Schema with refined validation
+export const signupSchema = signupObjectSchema.refine(validatePasswords, {
   message: "Passwords don't match.",
   path: ['confirmPassword'], // Path of error
 });
