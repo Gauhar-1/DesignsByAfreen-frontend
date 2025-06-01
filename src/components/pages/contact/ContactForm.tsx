@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,13 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Paperclip } from 'lucide-react';
 import { useState } from 'react';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }), // Note: Schema still expects email
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
+  photoDataUri: z.string().optional().describe("A reference photo as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -22,6 +24,9 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 // This would be a server action in a real application
 async function submitContactForm(data: ContactFormValues) {
   console.log('Contact form submitted:', data);
+  if (data.photoDataUri) {
+    console.log('Photo Data URI (first 100 chars):', data.photoDataUri.substring(0, 100) + '...');
+  }
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   // In a real app, you would send this data to Firestore here.
@@ -40,14 +45,49 @@ export default function ContactForm() {
       name: '',
       email: '',
       message: '',
+      photoDataUri: undefined,
     },
   });
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: 'File too large',
+          description: 'Please upload an image smaller than 5MB.',
+          variant: 'destructive',
+        });
+        form.setValue('photoDataUri', undefined);
+        event.target.value = ''; // Reset file input
+        return;
+      }
+      try {
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        form.setValue('photoDataUri', dataUri);
+      } catch (error) {
+        console.error("Error converting file to data URI:", error);
+        form.setValue('photoDataUri', undefined);
+        event.target.value = ''; // Reset file input
+        toast({
+          title: 'Error uploading image',
+          description: 'Could not process the image file. Please try another.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      form.setValue('photoDataUri', undefined);
+    }
+  };
 
   async function onSubmit(data: ContactFormValues) {
     setIsSubmitting(true);
     try {
-      // Placeholder for actual Firestore submission
-      // For now, just log to console and show a toast
       const response = await submitContactForm(data);
       if (response.success) {
         toast({
@@ -55,6 +95,11 @@ export default function ContactForm() {
           description: 'Thank you for contacting us. We will get back to you shortly.',
         });
         form.reset();
+        // Manually reset the file input display if necessary, though form.reset() might handle it
+        const fileInput = document.getElementById('photo-upload') as HTMLInputElement | null;
+        if (fileInput) {
+          fileInput.value = '';
+        }
       } else {
         throw new Error(response.message || 'Failed to send message.');
       }
@@ -90,9 +135,9 @@ export default function ContactForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Phone Number</FormLabel>
+              <FormLabel className="text-base">Email Address</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="e.g., (123) 456-7890" {...field} className="text-base py-3" />
+                <Input type="email" placeholder="your.email@example.com" {...field} className="text-base py-3" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,6 +154,28 @@ export default function ContactForm() {
                   placeholder="Tell us how we can help you..."
                   className="min-h-[120px] text-base py-3"
                   {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="photoDataUri"
+          render={({ field }) => ( // `field` can be used for errors, but onChange is handled manually
+            <FormItem>
+              <FormLabel className="text-base flex items-center">
+                <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
+                Reference Photo (Optional, max 5MB)
+              </FormLabel>
+              <FormControl>
+                <Input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                 />
               </FormControl>
               <FormMessage />
