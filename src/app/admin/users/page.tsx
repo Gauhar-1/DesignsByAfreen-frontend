@@ -14,9 +14,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { adminNewUserSchema, type AdminNewUserInput } from '@/lib/schemas/authSchemas';
+import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type AdminEditUserInput } from '@/lib/schemas/authSchemas';
 import { useToast } from '@/hooks/use-toast';
-import { adminCreateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
+import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 
 interface User {
   id: string;
@@ -43,6 +43,8 @@ const userStatuses = ['Active', 'Blocked'];
 
 export default function AdminUsersPage() {
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(initialMockUsers);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +61,20 @@ export default function AdminUsersPage() {
       role: 'Customer',
     },
   });
+
+  const editUserForm = useForm<AdminEditUserInput>({
+    resolver: zodResolver(adminEditUserSchema),
+  });
+  
+  useEffect(() => {
+    if (selectedUserForEdit && isEditUserDialogOpen) {
+      editUserForm.reset({
+        name: selectedUserForEdit.name,
+        email: selectedUserForEdit.email,
+        role: selectedUserForEdit.role,
+      });
+    }
+  }, [selectedUserForEdit, isEditUserDialogOpen, editUserForm]);
 
   async function onAddUserSubmit(data: AdminNewUserInput) {
     try {
@@ -94,6 +110,31 @@ export default function AdminUsersPage() {
       });
     }
   }
+
+  async function onEditUserSubmit(data: AdminEditUserInput) {
+    if (!selectedUserForEdit) return;
+    try {
+      const result = await adminUpdateUser(selectedUserForEdit.id, data);
+      if (result.success) {
+        toast({
+          title: 'User Updated',
+          description: result.message,
+        });
+        setUsers(prevUsers => 
+          prevUsers.map(u => 
+            u.id === selectedUserForEdit.id ? { ...u, ...data } : u
+          )
+        );
+        editUserForm.reset();
+        setIsEditUserDialogOpen(false);
+        setSelectedUserForEdit(null);
+      } else {
+        toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
+      }
+    } catch (error) {
+       toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
+    }
+  }
   
   const handleToggleBlockUser = async (userId: string, currentBlockedStatus: boolean | undefined) => {
     const action = currentBlockedStatus ? adminUnblockUser : adminBlockUser;
@@ -116,6 +157,11 @@ export default function AdminUsersPage() {
     } catch (error) {
       toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
     }
+  };
+
+  const openEditDialog = (user: User) => {
+    setSelectedUserForEdit(user);
+    setIsEditUserDialogOpen(true);
   };
 
   const filteredUsers = useMemo(() => {
@@ -169,6 +215,32 @@ export default function AdminUsersPage() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={(isOpen) => { setIsEditUserDialogOpen(isOpen); if (!isOpen) setSelectedUserForEdit(null); }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update details for {selectedUserForEdit?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editUserForm}>
+            <form onSubmit={editUserForm.handleSubmit(onEditUserSubmit)} className="space-y-4 py-4">
+              <FormField control={editUserForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={editUserForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={editUserForm.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{userRoles.map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+              <DialogFooter className="pt-4">
+                <DialogClose asChild><Button type="button" variant="outline" onClick={() => { editUserForm.reset(); setSelectedUserForEdit(null); }}>Cancel</Button></DialogClose>
+                <Button type="submit" disabled={editUserForm.formState.isSubmitting}>
+                  {editUserForm.formState.isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : ('Save Changes')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="shadow-md">
         <CardHeader>
@@ -221,7 +293,7 @@ export default function AdminUsersPage() {
               <TableRow>
                 <TableHead className="w-12 hidden md:table-cell">Avatar</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead className="hidden sm:table-cell">Email</TableHead>
                 <TableHead className="hidden sm:table-cell">Role</TableHead>
                 <TableHead className="hidden md:table-cell">Status</TableHead>
                 <TableHead className="hidden md:table-cell">Joined Date</TableHead>
@@ -238,7 +310,7 @@ export default function AdminUsersPage() {
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                   <TableCell className="hidden sm:table-cell">
                      <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
                   </TableCell>
@@ -251,6 +323,11 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{user.joined}</TableCell>
                   <TableCell className="text-right">
+                    {/* Placeholder for Edit Button - to be re-added if functionality is desired */}
+                    {/* <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(user)} title="Edit User">
+                         <Pencil className="h-4 w-4" />
+                         <span className="sr-only">Edit User</span>
+                    </Button> */}
                      <Button 
                         variant="ghost" 
                         size="icon" 
@@ -286,4 +363,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

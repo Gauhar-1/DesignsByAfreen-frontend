@@ -55,6 +55,8 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>(initialMockProducts);
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
 
   const addForm = useForm<AdminNewProductInput>({
     resolver: zodResolver(adminNewProductSchema),
@@ -87,6 +89,11 @@ export default function AdminProductsPage() {
       setImagePreview(selectedProduct.imageUrl || null);
     }
   }, [selectedProduct, isEditDialogOpen, editForm]);
+  
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleImageChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -405,7 +412,7 @@ export default function AdminProductsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedProduct(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={onDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {editForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Delete'}
+              {addForm.formState.isSubmitting || editForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -419,7 +426,13 @@ export default function AdminProductsPage() {
           <div className="pt-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search products..." className="pl-8 w-full sm:w-1/3" />
+              <Input 
+                type="search" 
+                placeholder="Search products by name or category..." 
+                className="pl-8 w-full sm:w-2/3 lg:w-1/3" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>
@@ -429,44 +442,55 @@ export default function AdminProductsPage() {
               <TableRow>
                 <TableHead className="w-16 hidden md:table-cell">Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead className="hidden sm:table-cell">Category</TableHead>
                 <TableHead className="hidden sm:table-cell">Price</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Stock</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="hidden md:table-cell">
-                    {product.imageUrl ? (
-                       <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} />
-                    ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{product.price}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-center">{product.stock}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(product)}>
-                      <Edit2 className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => openDeleteDialog(product)}>
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="hidden md:table-cell">
+                      {product.imageUrl ? (
+                         <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} />
+                      ) : (
+                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{product.category}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{product.price}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-center">{product.stock}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(product)}>
+                        <Edit2 className="h-4 w-4" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => openDeleteDialog(product)}>
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                 <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No products match your search term.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{products.length}</strong> of <strong>{products.length}</strong> products
+            {filteredProducts.length > 0
+              ? <>Showing <strong>{Math.min(1, filteredProducts.length)}-{filteredProducts.length}</strong> of {products.length} total products</>
+              : <>No products matching search. (<strong>{products.length}</strong> total products)</>
+            }
           </div>
         </CardFooter>
       </Card>

@@ -18,6 +18,7 @@ import Link from 'next/link';
 import Logo from '@/components/icons/Logo';
 import { Package, ShoppingCart, Users, LayoutDashboard, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button'; // Added for the new trigger
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -80,10 +81,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset className="flex-1 flex flex-col overflow-y-auto bg-background">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm">
-             <h1 className="text-2xl font-semibold font-headline text-primary">Admin Panel</h1>
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 shadow-sm">
+            <div className="md:hidden">
+              <SidebarTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-foreground">
+                  {/* Icon is already in SidebarTrigger */}
+                </Button>
+              </SidebarTrigger>
+            </div>
+             <h1 className="text-xl sm:text-2xl font-semibold font-headline text-primary">Admin Panel</h1>
           </header>
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-4 sm:p-6">
             {children}
           </main>
         </SidebarInset>
