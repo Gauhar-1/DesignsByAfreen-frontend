@@ -1,4 +1,5 @@
 
+import { use } from 'react'; // Added import
 import type { Metadata, ResolvingMetadata } from 'next';
 import Image from 'next/image';
 import { mockPortfolioItems, Product } from '@/lib/mockData';
@@ -9,13 +10,14 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
 type Props = {
-  params: { productId: string };
+  params: { productId: string }; // This type describes the shape of the unwrapped params
 };
 
 export async function generateMetadata(
-  { params }: Props,
+  { params: paramsFromProps }: Props, // Renamed to avoid conflict
   parent: ResolvingMetadata
 ): Promise<Metadata> {
+  const params = use(paramsFromProps); // Unwrap params
   const product = mockPortfolioItems.find(p => p.id === params.productId);
   if (!product) {
     return {
@@ -28,7 +30,8 @@ export async function generateMetadata(
   };
 }
 
-export default function ProductDetailPage({ params }: Props) {
+export default function ProductDetailPage({ params: paramsFromProps }: Props) { // Renamed
+  const params = use(paramsFromProps); // Unwrap params
   const product = mockPortfolioItems.find(p => p.id === params.productId);
 
   if (!product) {
