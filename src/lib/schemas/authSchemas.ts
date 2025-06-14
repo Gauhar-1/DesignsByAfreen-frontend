@@ -45,3 +45,11 @@ export const adminNewUserSchema = z.object({
   role: z.enum(["Customer", "Admin"]).default("Customer"),
 });
 export type AdminNewUserInput = z.infer<typeof adminNewUserSchema>;
+
+// Admin Edit User Schema (Password is not included for edit form simplicity)
+export const adminEditUserSchema = z.object({
+  name: z.string().min(2, "Name is required."),
+  email: z.string().email("Invalid email address."),
+  role: z.enum(["Customer", "Admin"], { required_error: "Role is required." }),
+});
+export type AdminEditUserInput = z.infer<typeof adminEditUserSchema>;

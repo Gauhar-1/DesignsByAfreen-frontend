@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { LoginInput, SignupInput, ForgotPasswordInput, AdminNewUserInput } from '@/lib/schemas/authSchemas';
+import type { LoginInput, SignupInput, ForgotPasswordInput, AdminNewUserInput, AdminEditUserInput } from '@/lib/schemas/authSchemas';
 
 export async function loginUser(data: LoginInput) {
   console.log('Server Action: Login attempt with phone number', data.phoneNumber);
@@ -54,4 +54,16 @@ export async function adminCreateUser(data: AdminNewUserInput) {
   return { success: true, message: `User ${data.name} created successfully with role ${data.role}.` };
   // Example failure:
   // return { success: false, message: 'Failed to create user. Email might already exist.' };
+}
+
+export async function adminUpdateUser(userId: string, data: AdminEditUserInput) {
+  console.log('Server Action: Admin attempting to update user:', userId, data);
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // TODO: Implement actual Firebase Admin SDK user update
+  // For now, let's simulate success
+  return { success: true, message: `User ${data.name} (ID: ${userId}) updated successfully.` };
+  // Example failure:
+  // return { success: false, message: 'Failed to update user.' };
 }
