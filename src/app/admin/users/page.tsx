@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, Edit3, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Loader2, Ban, CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type AdminEditUserInput } from '@/lib/schemas/authSchemas';
 import { useToast } from '@/hooks/use-toast';
-import { adminCreateUser, adminUpdateUser } from '@/actions/authActions';
+import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 
 interface User {
   id: string;
@@ -26,21 +26,23 @@ interface User {
   joined: string;
   avatar: string;
   dataAiHint?: string;
+  isBlocked?: boolean;
 }
 
-// Mock data - replace with actual data fetching
 const initialMockUsers: User[] = [
-  { id: 'USR001', name: 'Sophia Lorenza', email: 'sophia@example.com', role: 'Customer', joined: '2024-01-15', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'woman portrait' },
-  { id: 'USR002', name: 'Isabelle Moreau', email: 'isabelle@example.com', role: 'Customer', joined: '2024-03-22', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'person avatar' },
-  { id: 'USR003', name: 'Admin User', email: 'admin@designsbyafreen.com', role: 'Admin', joined: '2023-12-01', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'professional person' },
+  { id: 'USR001', name: 'Sophia Lorenza', email: 'sophia@example.com', role: 'Customer', joined: '2024-01-15', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'woman portrait', isBlocked: false },
+  { id: 'USR002', name: 'Isabelle Moreau', email: 'isabelle@example.com', role: 'Customer', joined: '2024-03-22', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'person avatar', isBlocked: true },
+  { id: 'USR003', name: 'Admin User', email: 'admin@designsbyafreen.com', role: 'Admin', joined: '2023-12-01', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'professional person', isBlocked: false },
 ];
 
 export default function AdminUsersPage() {
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  // Edit dialog state can be kept if editing is intended to be re-added elsewhere, but the button to trigger it is removed from rows.
+  // const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
+  // const [editingUser, setEditingUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(initialMockUsers);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const addUserForm = useForm<AdminNewUserInput>({
     resolver: zodResolver(adminNewUserSchema),
@@ -52,24 +54,25 @@ export default function AdminUsersPage() {
     },
   });
 
-  const editUserForm = useForm<AdminEditUserInput>({
-    resolver: zodResolver(adminEditUserSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      role: 'Customer',
-    },
-  });
+  // Edit form can be kept if editing is intended to be re-added elsewhere
+  // const editUserForm = useForm<AdminEditUserInput>({
+  //   resolver: zodResolver(adminEditUserSchema),
+  //   defaultValues: {
+  //     name: '',
+  //     email: '',
+  //     role: 'Customer',
+  //   },
+  // });
 
-  useEffect(() => {
-    if (editingUser && isEditUserDialogOpen) {
-      editUserForm.reset({
-        name: editingUser.name,
-        email: editingUser.email,
-        role: editingUser.role,
-      });
-    }
-  }, [editingUser, isEditUserDialogOpen, editUserForm]);
+  // useEffect(() => {
+  //   if (editingUser && isEditUserDialogOpen) {
+  //     editUserForm.reset({
+  //       name: editingUser.name,
+  //       email: editingUser.email,
+  //       role: editingUser.role,
+  //     });
+  //   }
+  // }, [editingUser, isEditUserDialogOpen, editUserForm]);
 
   async function onAddUserSubmit(data: AdminNewUserInput) {
     try {
@@ -83,8 +86,9 @@ export default function AdminUsersPage() {
           ...data, 
           id: `USR${Math.floor(Math.random()*900)+100}`, 
           joined: new Date().toISOString().split('T')[0], 
-          avatar: `https://placehold.co/40x40.png`, // Generic placeholder
-          dataAiHint: 'new user'
+          avatar: `https://placehold.co/40x40.png`,
+          dataAiHint: 'new user',
+          isBlocked: false,
         };
         setUsers(prev => [newUser, ...prev]);
         addUserForm.reset();
@@ -105,58 +109,70 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function onEditUserSubmit(data: AdminEditUserInput) {
-    if (!editingUser) return;
+  // async function onEditUserSubmit(data: AdminEditUserInput) {
+  //   if (!editingUser) return;
+  //   try {
+  //     const result = await adminUpdateUser(editingUser.id, data);
+  //     if (result.success) {
+  //       toast({
+  //         title: 'User Updated',
+  //         description: result.message,
+  //       });
+  //       setUsers(prevUsers => 
+  //         prevUsers.map(u => 
+  //           u.id === editingUser.id ? { ...u, ...data } : u
+  //         )
+  //       );
+  //       editUserForm.reset();
+  //       setIsEditUserDialogOpen(false);
+  //       setEditingUser(null);
+  //     } else {
+  //       toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
+  //     }
+  //   } catch (error) {
+  //     toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
+  //   }
+  // }
+
+  // const openEditDialog = (user: User) => {
+  //   setEditingUser(user);
+  //   setIsEditUserDialogOpen(true);
+  // };
+  
+  const handleToggleBlockUser = async (userId: string, currentBlockedStatus: boolean | undefined) => {
+    const action = currentBlockedStatus ? adminUnblockUser : adminBlockUser;
+    const actionName = currentBlockedStatus ? 'Unblocked' : 'Blocked';
     try {
-      const result = await adminUpdateUser(editingUser.id, data);
+      const result = await action(userId);
       if (result.success) {
         toast({
-          title: 'User Updated',
+          title: `User ${actionName}`,
           description: result.message,
         });
         setUsers(prevUsers => 
           prevUsers.map(u => 
-            u.id === editingUser.id ? { ...u, ...data } : u
+            u.id === userId ? { ...u, isBlocked: !currentBlockedStatus } : u
           )
         );
-        editUserForm.reset();
-        setIsEditUserDialogOpen(false);
-        setEditingUser(null);
       } else {
-        toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
+        toast({ title: 'Error', description: result.message || `Failed to ${actionName.toLowerCase()} user.`, variant: 'destructive' });
       }
     } catch (error) {
       toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
     }
-  }
-
-  const openEditDialog = (user: User) => {
-    setEditingUser(user);
-    setIsEditUserDialogOpen(true);
-  };
-  
-  // Placeholder for role change logic
-  const handleRoleChange = async (userId: string, newRole: 'Admin' | 'Customer') => {
-    toast({
-      title: 'Role Change (Mock)',
-      description: `User ${userId} role would be changed to ${newRole}. Implement actual logic.`,
-    });
-    // In a real app, call a server action and update user state
-    // For now, just optimistically update for demo
-     setUsers(prevUsers => 
-      prevUsers.map(u => 
-        u.id === userId ? { ...u, role: newRole } : u
-      )
-    );
   };
 
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h2 className="text-3xl font-bold tracking-tight text-primary">Manage Users</h2>
-            <p className="text-muted-foreground">View, edit roles, or manage user accounts.</p>
+            <p className="text-muted-foreground">View, add new, or block/unblock user accounts.</p>
         </div>
         <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
           <DialogTrigger asChild>
@@ -189,7 +205,8 @@ export default function AdminUsersPage() {
         </Dialog>
       </div>
 
-      {/* Edit User Dialog */}
+      {/* Edit User Dialog - Kept for potential future use, but not triggerable from table rows now */}
+      {/* 
       <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -211,6 +228,7 @@ export default function AdminUsersPage() {
           </Form>
         </DialogContent>
       </Dialog>
+      */}
 
       <Card className="shadow-md">
         <CardHeader>
@@ -219,7 +237,13 @@ export default function AdminUsersPage() {
            <div className="pt-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search users by name or email..." className="pl-8 w-full sm:w-1/3" />
+              <Input 
+                type="search" 
+                placeholder="Search users by name or email..." 
+                className="pl-8 w-full sm:w-1/3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>
@@ -231,13 +255,14 @@ export default function AdminUsersPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="hidden sm:table-cell">Role</TableHead>
+                <TableHead className="hidden md:table-cell">Status</TableHead>
                 <TableHead className="hidden md:table-cell">Joined Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
                   <TableCell className="hidden md:table-cell">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} />
@@ -249,35 +274,45 @@ export default function AdminUsersPage() {
                   <TableCell className="hidden sm:table-cell">
                      <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
                   </TableCell>
+                   <TableCell className="hidden md:table-cell">
+                    {user.isBlocked ? (
+                      <Badge variant="destructive">Blocked</Badge>
+                    ) : (
+                      <Badge variant="default">Active</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="hidden md:table-cell">{user.joined}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(user)}>
-                      <Edit3 className="h-4 w-4" />
-                       <span className="sr-only">Edit User</span>
-                    </Button>
-                    {user.role === 'Admin' ? (
-                        <Button variant="ghost" size="icon" className="hover:text-orange-500" title="Revoke Admin" onClick={() => handleRoleChange(user.id, 'Customer')}>
-                            <ShieldOff className="h-4 w-4" />
-                            <span className="sr-only">Revoke Admin</span>
-                        </Button>
-                    ) : (
-                        <Button variant="ghost" size="icon" className="hover:text-green-600" title="Make Admin" onClick={() => handleRoleChange(user.id, 'Admin')}>
-                            <ShieldCheck className="h-4 w-4" />
-                            <span className="sr-only">Make Admin</span>
-                        </Button>
-                    )}
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleToggleBlockUser(user.id, user.isBlocked)}
+                        title={user.isBlocked ? "Unblock User" : "Block User"}
+                        className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}
+                      >
+                        {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                        <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span>
+                      </Button>
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredUsers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No users match your search.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{users.length}</strong> of <strong>{users.length}</strong> users
+            Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> users
           </div>
         </CardFooter>
       </Card>
     </div>
   );
 }
+

@@ -67,3 +67,17 @@ export async function adminUpdateUser(userId: string, data: AdminEditUserInput) 
   // Example failure:
   // return { success: false, message: 'Failed to update user.' };
 }
+
+export async function adminBlockUser(userId: string) {
+  console.log('Server Action: Admin attempting to BLOCK user:', userId);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // TODO: Implement actual database interaction to set user.disabled = true or similar
+  return { success: true, message: `User ID "${userId}" has been blocked.` };
+}
+
+export async function adminUnblockUser(userId: string) {
+  console.log('Server Action: Admin attempting to UNBLOCK user:', userId);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // TODO: Implement actual database interaction to set user.disabled = false or similar
+  return { success: true, message: `User ID "${userId}" has been unblocked.` };
+}
