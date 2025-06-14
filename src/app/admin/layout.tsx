@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <SidebarMenuButton
                       tooltip={item.label}
                       isActive={pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))}
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:hover:bg-sidebar-primary/90"
                     >
                       <item.icon className="h-5 w-5" />
                       <span>{item.label}</span>
