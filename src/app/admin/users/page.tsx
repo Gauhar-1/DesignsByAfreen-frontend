@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type AdminEditUserInput } from '@/lib/schemas/authSchemas';
+import { adminNewUserSchema, type AdminNewUserInput } from '@/lib/schemas/authSchemas';
 import { useToast } from '@/hooks/use-toast';
-import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
+import { adminCreateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 
 interface User {
   id: string;
@@ -33,16 +33,22 @@ const initialMockUsers: User[] = [
   { id: 'USR001', name: 'Sophia Lorenza', email: 'sophia@example.com', role: 'Customer', joined: '2024-01-15', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'woman portrait', isBlocked: false },
   { id: 'USR002', name: 'Isabelle Moreau', email: 'isabelle@example.com', role: 'Customer', joined: '2024-03-22', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'person avatar', isBlocked: true },
   { id: 'USR003', name: 'Admin User', email: 'admin@designsbyafreen.com', role: 'Admin', joined: '2023-12-01', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'professional person', isBlocked: false },
+  { id: 'USR004', name: 'Charles Xavier', email: 'charles@example.com', role: 'Admin', joined: '2024-02-10', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'man thinking', isBlocked: false },
+  { id: 'USR005', name: 'Diana Prince', email: 'diana@example.com', role: 'Customer', joined: '2024-05-01', avatar: 'https://placehold.co/40x40.png', dataAiHint: 'woman smiling', isBlocked: false },
 ];
+
+const userRoles: User['role'][] = ['Customer', 'Admin'];
+const userStatuses = ['Active', 'Blocked'];
+
 
 export default function AdminUsersPage() {
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  // Edit dialog state can be kept if editing is intended to be re-added elsewhere, but the button to trigger it is removed from rows.
-  // const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
-  // const [editingUser, setEditingUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(initialMockUsers);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+
 
   const addUserForm = useForm<AdminNewUserInput>({
     resolver: zodResolver(adminNewUserSchema),
@@ -53,26 +59,6 @@ export default function AdminUsersPage() {
       role: 'Customer',
     },
   });
-
-  // Edit form can be kept if editing is intended to be re-added elsewhere
-  // const editUserForm = useForm<AdminEditUserInput>({
-  //   resolver: zodResolver(adminEditUserSchema),
-  //   defaultValues: {
-  //     name: '',
-  //     email: '',
-  //     role: 'Customer',
-  //   },
-  // });
-
-  // useEffect(() => {
-  //   if (editingUser && isEditUserDialogOpen) {
-  //     editUserForm.reset({
-  //       name: editingUser.name,
-  //       email: editingUser.email,
-  //       role: editingUser.role,
-  //     });
-  //   }
-  // }, [editingUser, isEditUserDialogOpen, editUserForm]);
 
   async function onAddUserSubmit(data: AdminNewUserInput) {
     try {
@@ -108,36 +94,6 @@ export default function AdminUsersPage() {
       });
     }
   }
-
-  // async function onEditUserSubmit(data: AdminEditUserInput) {
-  //   if (!editingUser) return;
-  //   try {
-  //     const result = await adminUpdateUser(editingUser.id, data);
-  //     if (result.success) {
-  //       toast({
-  //         title: 'User Updated',
-  //         description: result.message,
-  //       });
-  //       setUsers(prevUsers => 
-  //         prevUsers.map(u => 
-  //           u.id === editingUser.id ? { ...u, ...data } : u
-  //         )
-  //       );
-  //       editUserForm.reset();
-  //       setIsEditUserDialogOpen(false);
-  //       setEditingUser(null);
-  //     } else {
-  //       toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
-  //     }
-  //   } catch (error) {
-  //     toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
-  //   }
-  // }
-
-  // const openEditDialog = (user: User) => {
-  //   setEditingUser(user);
-  //   setIsEditUserDialogOpen(true);
-  // };
   
   const handleToggleBlockUser = async (userId: string, currentBlockedStatus: boolean | undefined) => {
     const action = currentBlockedStatus ? adminUnblockUser : adminBlockUser;
@@ -162,10 +118,19 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = term === '' || user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
+      const matchesRole = roleFilter === 'All' || user.role === roleFilter;
+      const matchesStatus = 
+        statusFilter === 'All' ||
+        (statusFilter === 'Active' && !user.isBlocked) ||
+        (statusFilter === 'Blocked' && user.isBlocked);
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [users, searchTerm, roleFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -192,7 +157,7 @@ export default function AdminUsersPage() {
                 <FormField control={addUserForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={addUserForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={addUserForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={addUserForm.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Customer">Customer</SelectItem><SelectItem value="Admin">Admin</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={addUserForm.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{userRoles.map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <DialogFooter className="pt-4">
                   <DialogClose asChild><Button type="button" variant="outline" onClick={() => addUserForm.reset()}>Cancel</Button></DialogClose>
                   <Button type="submit" disabled={addUserForm.formState.isSubmitting}>
@@ -205,45 +170,48 @@ export default function AdminUsersPage() {
         </Dialog>
       </div>
 
-      {/* Edit User Dialog - Kept for potential future use, but not triggerable from table rows now */}
-      {/* 
-      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit User: {editingUser?.name}</DialogTitle>
-            <DialogDescription>Update the details for this user.</DialogDescription>
-          </DialogHeader>
-          <Form {...editUserForm}>
-            <form onSubmit={editUserForm.handleSubmit(onEditUserSubmit)} className="space-y-4 py-4">
-              <FormField control={editUserForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={editUserForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={editUserForm.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Customer">Customer</SelectItem><SelectItem value="Admin">Admin</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-              <DialogFooter className="pt-4">
-                <DialogClose asChild><Button type="button" variant="outline" onClick={() => { editUserForm.reset(); setEditingUser(null); }}>Cancel</Button></DialogClose>
-                <Button type="submit" disabled={editUserForm.formState.isSubmitting}>
-                  {editUserForm.formState.isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : ('Save Changes')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      */}
-
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>User List</CardTitle>
           <CardDescription>A list of all registered users.</CardDescription>
-           <div className="pt-4">
+           <div className="pt-4 space-y-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input 
                 type="search" 
                 placeholder="Search users by name or email..." 
-                className="pl-8 w-full sm:w-1/3"
+                className="pl-8 w-full sm:w-2/3 lg:w-1/3"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 min-w-[150px]">
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filter by Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Roles</SelectItem>
+                        {userRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex-1 min-w-[150px]">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        {userStatuses.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
             </div>
           </div>
         </CardHeader>
@@ -299,7 +267,7 @@ export default function AdminUsersPage() {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No users match your search.
+                    No users match your current filters.
                   </TableCell>
                 </TableRow>
               )}
@@ -308,7 +276,10 @@ export default function AdminUsersPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> users
+            {filteredUsers.length > 0
+              ? <>Showing <strong>{Math.min(1, filteredUsers.length)}-{filteredUsers.length}</strong> of {users.length} total users</>
+              : <>No users matching filters. (<strong>{users.length}</strong> total users)</>
+            }
           </div>
         </CardFooter>
       </Card>
