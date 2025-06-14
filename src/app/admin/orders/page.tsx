@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Truck, Package, CalendarDays, User, MapPin, DollarSign, CreditCard } from 'lucide-react';
+import { Search, Eye, Truck, Package, CalendarDays, User, MapPin, DollarSign, CreditCard, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,9 +15,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type OrderShippingUpdateInput, orderShippingUpdateSchema } from '@/lib/schemas/orderSchemas';
+import { adminUpdateShipping } from '@/actions/orderActions';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderItem {
   id: string;
@@ -49,7 +57,7 @@ interface Order {
   };
 }
 
-const mockOrders: Order[] = [
+const initialMockOrders: Order[] = [
   {
     id: 'ORD001',
     customer: 'Sophia Lorenza',
@@ -117,18 +125,59 @@ const mockOrders: Order[] = [
 ];
 
 export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>(initialMockOrders);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isUpdateShippingDialogOpen, setIsUpdateShippingDialogOpen] = useState(false);
+  const [selectedOrderForShipping, setSelectedOrderForShipping] = useState<Order | null>(null);
+  const { toast } = useToast();
+
+  const shippingForm = useForm<OrderShippingUpdateInput>({
+    resolver: zodResolver(orderShippingUpdateSchema),
+    defaultValues: {
+      status: 'Processing', // Default or fetch current status
+    },
+  });
 
   const openViewDialog = (order: Order) => {
     setSelectedOrder(order);
     setIsViewDialogOpen(true);
   };
 
+  const openUpdateShippingDialog = (order: Order) => {
+    setSelectedOrderForShipping(order);
+    shippingForm.reset({ status: order.status }); // Reset form with current order status
+    setIsUpdateShippingDialogOpen(true);
+  };
+
+  const onShippingUpdateSubmit = async (data: OrderShippingUpdateInput) => {
+    if (!selectedOrderForShipping) return;
+    try {
+      const result = await adminUpdateShipping(selectedOrderForShipping.id, data);
+      if (result.success) {
+        toast({
+          title: 'Shipping Updated',
+          description: result.message,
+        });
+        setOrders(prevOrders =>
+          prevOrders.map(o =>
+            o.id === selectedOrderForShipping.id ? { ...o, status: data.status } : o
+          )
+        );
+        setIsUpdateShippingDialogOpen(false);
+        setSelectedOrderForShipping(null);
+      } else {
+        toast({ title: 'Error', description: result.message || 'Failed to update shipping.', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: (error as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
+    }
+  };
+
   const getStatusBadgeVariant = (status: Order['status']) => {
     switch (status) {
       case 'Shipped': return 'secondary';
-      case 'Delivered': return 'default'; // Using 'default' for success-like
+      case 'Delivered': return 'default'; 
       case 'Processing': return 'outline';
       case 'Cancelled': return 'destructive';
       default: return 'outline';
@@ -180,7 +229,7 @@ export default function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockOrders.map((order) => (
+              {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.customer}</TableCell>
@@ -201,7 +250,7 @@ export default function AdminOrdersPage() {
                       <Eye className="h-4 w-4" />
                        <span className="sr-only">View Order</span>
                     </Button>
-                     <Button variant="ghost" size="icon" className="hover:text-blue-600">
+                     <Button variant="ghost" size="icon" className="hover:text-blue-600" onClick={() => openUpdateShippingDialog(order)}>
                       <Truck className="h-4 w-4" />
                        <span className="sr-only">Update Shipping</span>
                     </Button>
@@ -213,11 +262,12 @@ export default function AdminOrdersPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{mockOrders.length}</strong> of <strong>{mockOrders.length}</strong> orders
+            Showing <strong>1-{orders.length}</strong> of <strong>{orders.length}</strong> orders
           </div>
         </CardFooter>
       </Card>
 
+      {/* View Order Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -291,10 +341,77 @@ export default function AdminOrdersPage() {
             <Separator className="my-4"/>
              <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>Close</Button>
-                {/* Potential actions like "Mark as Shipped", "Print Invoice", etc. */}
              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Shipping Dialog */}
+      <Dialog open={isUpdateShippingDialogOpen} onOpenChange={setIsUpdateShippingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Shipping Status</DialogTitle>
+            <DialogDescription>
+              Update the shipping status for order {selectedOrderForShipping?.id}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...shippingForm}>
+            <form onSubmit={shippingForm.handleSubmit(onShippingUpdateSubmit)} className="space-y-4 py-4">
+              <FormField
+                control={shippingForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Order Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select new status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Processing">Processing</SelectItem>
+                        <SelectItem value="Shipped">Shipped</SelectItem>
+                        <SelectItem value="Delivered">Delivered</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* Add tracking number input if needed in the future */}
+              {/* <FormField
+                control={shippingForm.control}
+                name="trackingNumber" // Assuming you add this to the schema
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tracking Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter tracking number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+              <DialogFooter className="pt-4">
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" onClick={() => { shippingForm.reset(); setSelectedOrderForShipping(null); }}>Cancel</Button>
+                </DialogClose>
+                <Button type="submit" disabled={shippingForm.formState.isSubmitting}>
+                  {shippingForm.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
