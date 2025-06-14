@@ -11,14 +11,15 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
+  SidebarTrigger, // This is the trigger for desktop icon mode & mobile sheet
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import Logo from '@/components/icons/Logo';
-import { Package, ShoppingCart, Users, LayoutDashboard, LogOut } from 'lucide-react';
+import { Package, ShoppingCart, Users, LayoutDashboard, LogOut, PanelLeft } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { SheetTitle } from '@/components/ui/sheet'; // Import SheetTitle
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -40,8 +41,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
           <SidebarHeader className="p-4">
             <div className="flex items-center justify-between">
-              <Logo className="text-lg group-data-[collapsible=icon]:hidden" />
+              {/* Wrap Logo with SheetTitle for accessibility in mobile Sheet view */}
+              <SheetTitle>
+                <Logo className="text-lg group-data-[collapsible=icon]:hidden" />
+              </SheetTitle>
               <div className="group-data-[collapsible=icon]:mx-auto">
+                {/* This SidebarTrigger is for desktop icon mode (collapsing to icons) */}
                 <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
               </div>
             </div>
@@ -82,9 +87,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </Sidebar>
         <SidebarInset className="flex-1 flex flex-col overflow-y-auto bg-background">
           <header className="sticky top-0 z-[1000] flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 shadow-sm">
-            <div className="md:hidden">
-              <SidebarTrigger variant="ghost" size="icon" className="text-foreground" />
-            </div>
+            {/* This SidebarTrigger is for opening the mobile sheet (off-canvas) */}
+            <SidebarTrigger variant="ghost" size="icon" className="md:hidden text-foreground">
+              <PanelLeft className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </SidebarTrigger>
              <h1 className="text-xl sm:text-2xl font-semibold font-headline text-primary">Admin Panel</h1>
           </header>
           <main className="flex-1 p-4 sm:p-6">
