@@ -244,8 +244,8 @@ export default function AdminOrdersPage() {
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
                     <p><strong>Date:</strong> {selectedOrder.date}</p>
-                    <p><strong>Status:</strong> <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>{selectedOrder.status}</Badge></p>
-                     <p><strong>Total:</strong> <span className="font-semibold">{selectedOrder.total}</span></p>
+                    <div className="flex items-center text-sm"><strong className="mr-1">Status:</strong> <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>{selectedOrder.status}</Badge></div>
+                    <p><strong>Total:</strong> <span className="font-semibold">{selectedOrder.total}</span></p>
                   </CardContent>
                 </Card>
               </div>
@@ -256,7 +256,7 @@ export default function AdminOrdersPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <p><strong>Method:</strong> {selectedOrder.paymentMethod}</p>
-                  <p><strong>Status:</strong> <Badge variant={getPaymentStatusBadgeVariant(selectedOrder.paymentStatus)}>{selectedOrder.paymentStatus}</Badge></p>
+                  <div className="flex items-center text-sm"><strong className="mr-1">Status:</strong> <Badge variant={getPaymentStatusBadgeVariant(selectedOrder.paymentStatus)}>{selectedOrder.paymentStatus}</Badge></div>
                 </CardContent>
               </Card>
 
@@ -300,3 +300,4 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
