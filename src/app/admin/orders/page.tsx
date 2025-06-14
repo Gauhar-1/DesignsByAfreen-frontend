@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -124,8 +124,17 @@ const initialMockOrders: Order[] = [
   },
 ];
 
+const orderStatusOptions: Order['status'][] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
+const paymentStatusOptions: Order['paymentStatus'][] = ['Paid', 'Pending', 'Refunded', 'Failed'];
+
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(initialMockOrders);
+  const [allOrders, setAllOrders] = useState<Order[]>(initialMockOrders);
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [paymentFilter, setPaymentFilter] = useState<string>('All');
+
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdateShippingDialogOpen, setIsUpdateShippingDialogOpen] = useState(false);
@@ -135,9 +144,25 @@ export default function AdminOrdersPage() {
   const shippingForm = useForm<OrderShippingUpdateInput>({
     resolver: zodResolver(orderShippingUpdateSchema),
     defaultValues: {
-      status: 'Processing', // Default or fetch current status
+      status: 'Processing',
     },
   });
+
+  const displayedOrders = useMemo(() => {
+    return allOrders
+      .filter(order => {
+        const term = searchTerm.toLowerCase();
+        if (term === '') return true;
+        return (
+          order.id.toLowerCase().includes(term) ||
+          order.customer.toLowerCase().includes(term) ||
+          order.email.toLowerCase().includes(term)
+        );
+      })
+      .filter(order => statusFilter === 'All' || order.status === statusFilter)
+      .filter(order => paymentFilter === 'All' || order.paymentStatus === paymentFilter);
+  }, [allOrders, searchTerm, statusFilter, paymentFilter]);
+
 
   const openViewDialog = (order: Order) => {
     setSelectedOrder(order);
@@ -146,7 +171,7 @@ export default function AdminOrdersPage() {
 
   const openUpdateShippingDialog = (order: Order) => {
     setSelectedOrderForShipping(order);
-    shippingForm.reset({ status: order.status }); // Reset form with current order status
+    shippingForm.reset({ status: order.status });
     setIsUpdateShippingDialogOpen(true);
   };
 
@@ -159,7 +184,7 @@ export default function AdminOrdersPage() {
           title: 'Shipping Updated',
           description: result.message,
         });
-        setOrders(prevOrders =>
+        setAllOrders(prevOrders =>
           prevOrders.map(o =>
             o.id === selectedOrderForShipping.id ? { ...o, status: data.status } : o
           )
@@ -208,10 +233,44 @@ export default function AdminOrdersPage() {
         <CardHeader>
           <CardTitle>Order List</CardTitle>
           <CardDescription>A list of all customer orders.</CardDescription>
-           <div className="pt-4">
+           <div className="pt-4 space-y-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search orders by ID or customer..." className="pl-8 w-full sm:w-1/3" />
+              <Input 
+                type="search" 
+                placeholder="Search by ID, customer, or email..." 
+                className="pl-8 w-full sm:w-2/3 lg:w-1/3" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 min-w-[150px]">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Order Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    {orderStatusOptions.map(status => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Payment Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                     <SelectItem value="All">All Payment Statuses</SelectItem>
+                    {paymentStatusOptions.map(status => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -229,40 +288,51 @@ export default function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{order.date}</TableCell>
-                  <TableCell className="hidden md:table-cell">{order.total}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                     <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}>
-                        {order.paymentStatus}
-                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openViewDialog(order)}>
-                      <Eye className="h-4 w-4" />
-                       <span className="sr-only">View Order</span>
-                    </Button>
-                     <Button variant="ghost" size="icon" className="hover:text-blue-600" onClick={() => openUpdateShippingDialog(order)}>
-                      <Truck className="h-4 w-4" />
-                       <span className="sr-only">Update Shipping</span>
-                    </Button>
+              {displayedOrders.length > 0 ? (
+                displayedOrders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{order.date}</TableCell>
+                    <TableCell className="hidden md:table-cell">{order.total}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(order.status)}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}>
+                          {order.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openViewDialog(order)}>
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">View Order</span>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="hover:text-blue-600" onClick={() => openUpdateShippingDialog(order)}>
+                        <Truck className="h-4 w-4" />
+                        <span className="sr-only">Update Shipping</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No orders match your current filters.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{orders.length}</strong> of <strong>{orders.length}</strong> orders
+            {displayedOrders.length > 0
+              ? <>Showing <strong>{Math.min(1, displayedOrders.length)}-{displayedOrders.length}</strong> of {allOrders.length} total orders</>
+              : <>No orders matching filters. (<strong>{allOrders.length}</strong> total orders)</>
+            }
           </div>
         </CardFooter>
       </Card>
@@ -371,30 +441,15 @@ export default function AdminOrdersPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Processing">Processing</SelectItem>
-                        <SelectItem value="Shipped">Shipped</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        {orderStatusOptions.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {/* Add tracking number input if needed in the future */}
-              {/* <FormField
-                control={shippingForm.control}
-                name="trackingNumber" // Assuming you add this to the schema
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tracking Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter tracking number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
               <DialogFooter className="pt-4">
                 <DialogClose asChild>
                   <Button type="button" variant="outline" onClick={() => { shippingForm.reset(); setSelectedOrderForShipping(null); }}>Cancel</Button>
