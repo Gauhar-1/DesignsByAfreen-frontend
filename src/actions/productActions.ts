@@ -4,21 +4,28 @@
 import type { AdminNewProductInput } from '@/lib/schemas/productSchemas';
 
 export async function adminCreateProduct(data: AdminNewProductInput) {
-  console.log('Server Action: Admin attempting to create product:', data);
+  console.log('Server Action: Admin attempting to create product:', {
+    ...data,
+    imageUrl: data.imageUrl ? `Data URI starting with ${data.imageUrl.substring(0,30)}...` : 'No image'
+  });
   // Simulate API call to database
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   // TODO: Implement actual database interaction (e.g., Firestore)
-  // For now, let's simulate success
+  // And if imageUrl is a Data URI, upload it to storage first and save the URL.
   return { success: true, message: `Product "${data.name}" created successfully.` };
   // Example failure:
   // return { success: false, message: 'Failed to create product. An unexpected error occurred.' };
 }
 
 export async function adminUpdateProduct(productId: string, data: Partial<AdminNewProductInput>) {
-  console.log('Server Action: Admin attempting to update product:', productId, data);
+   console.log('Server Action: Admin attempting to update product:', productId, {
+    ...data,
+    imageUrl: data.imageUrl ? `Data URI starting with ${data.imageUrl.substring(0,30)}...` : (data.imageUrl === undefined ? 'Image not changed' : 'Image removed/cleared')
+  });
   await new Promise(resolve => setTimeout(resolve, 1000));
   // TODO: Implement actual database interaction (e.g., Firestore)
+  // And if imageUrl is a new Data URI, upload it to storage first and save the URL.
   return { success: true, message: `Product "${data.name || 'Item'}" updated successfully.` };
   // Example failure:
   // return { success: false, message: 'Failed to update product.' };
@@ -28,9 +35,8 @@ export async function adminDeleteProduct(productId: string) {
   console.log('Server Action: Admin attempting to delete product:', productId);
   await new Promise(resolve => setTimeout(resolve, 1000));
   // TODO: Implement actual database interaction (e.g., Firestore)
+  // And delete associated image from storage if applicable.
   return { success: true, message: `Product ID "${productId}" deleted successfully.` };
   // Example failure:
   // return { success: false, message: 'Failed to delete product.' };
 }
-
-    

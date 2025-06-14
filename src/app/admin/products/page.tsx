@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Search, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, Loader2, UploadCloud } from 'lucide-react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -31,7 +31,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { adminNewProductSchema, type AdminNewProductInput } from '@/lib/schemas/productSchemas';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +41,6 @@ interface Product extends AdminNewProductInput {
   id: string;
 }
 
-// Mock data - replace with actual data fetching
 const initialMockProducts: Product[] = [
   { id: '1', name: 'Elegant Evening Gown', category: 'Bridal', price: '$1200', stock: 10, imageUrl: 'https://placehold.co/64x64.png', dataAiHint: 'gown fashion', description: 'A stunning silk charmeuse evening gown.' },
   { id: '2', name: 'Chic Casual Blazer', category: 'Casual', price: '$350', stock: 25, imageUrl: 'https://placehold.co/64x64.png', dataAiHint: 'blazer model', description: 'Versatile linen blazer.' },
@@ -55,6 +54,7 @@ export default function AdminProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>(initialMockProducts);
   const { toast } = useToast();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const addForm = useForm<AdminNewProductInput>({
     resolver: zodResolver(adminNewProductSchema),
@@ -63,7 +63,7 @@ export default function AdminProductsPage() {
       category: '',
       price: '',
       stock: 0,
-      imageUrl: '',
+      imageUrl: undefined,
       description: '',
       dataAiHint: '',
     },
@@ -80,12 +80,41 @@ export default function AdminProductsPage() {
         category: selectedProduct.category,
         price: selectedProduct.price,
         stock: selectedProduct.stock,
-        imageUrl: selectedProduct.imageUrl,
+        imageUrl: selectedProduct.imageUrl || undefined,
         description: selectedProduct.description || '',
         dataAiHint: selectedProduct.dataAiHint || '',
       });
+      setImagePreview(selectedProduct.imageUrl || null);
     }
   }, [selectedProduct, isEditDialogOpen, editForm]);
+
+  const handleImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    formInstance: UseFormReturn<AdminNewProductInput>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({ title: 'File too large', description: 'Please upload an image smaller than 2MB.', variant: 'destructive' });
+        formInstance.setValue('imageUrl', selectedProduct?.imageUrl || undefined);
+        setImagePreview(selectedProduct?.imageUrl || null);
+        if (event.target) event.target.value = ''; // Clear the file input
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        formInstance.setValue('imageUrl', dataUri);
+        setImagePreview(dataUri);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // If file selection is cancelled or cleared
+      const originalImageUrl = formInstance === editForm ? selectedProduct?.imageUrl : undefined;
+      formInstance.setValue('imageUrl', originalImageUrl);
+      setImagePreview(originalImageUrl || null);
+    }
+  };
 
   async function onAddSubmit(data: AdminNewProductInput) {
     try {
@@ -98,6 +127,7 @@ export default function AdminProductsPage() {
         const newProduct: Product = { ...data, id: `PROD${Math.floor(Math.random() * 900) + 100}`};
         setProducts(prev => [newProduct, ...prev]);
         addForm.reset();
+        setImagePreview(null);
         setIsAddDialogOpen(false);
       } else {
         toast({ title: 'Error', description: result.message || 'Failed to create product.', variant: 'destructive' });
@@ -118,6 +148,7 @@ export default function AdminProductsPage() {
         });
         setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...selectedProduct, ...data } : p));
         editForm.reset();
+        setImagePreview(null);
         setIsEditDialogOpen(false);
         setSelectedProduct(null);
       } else {
@@ -150,6 +181,7 @@ export default function AdminProductsPage() {
 
   const openEditDialog = (product: Product) => {
     setSelectedProduct(product);
+    setImagePreview(product.imageUrl || null);
     setIsEditDialogOpen(true);
   };
 
@@ -158,7 +190,15 @@ export default function AdminProductsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const ProductFormFields = ({ formInstance }: { formInstance: typeof addForm | typeof editForm }) => (
+  const ProductFormFields = ({
+    formInstance,
+    currentImagePreview,
+    onImageChangeHandler
+  }: {
+    formInstance: UseFormReturn<AdminNewProductInput>;
+    currentImagePreview: string | null;
+    onImageChangeHandler: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
     <>
       <FormField
         control={formInstance.control}
@@ -215,16 +255,32 @@ export default function AdminProductsPage() {
       <FormField
         control={formInstance.control}
         name="imageUrl"
-        render={({ field }) => (
+        render={({ field }) => ( // `field` is used by RHF for state, but onChange is custom
           <FormItem>
-            <FormLabel>Image URL</FormLabel>
+            <FormLabel className="flex items-center">
+              <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" />
+              Product Image (max 2MB)
+            </FormLabel>
             <FormControl>
-              <Input type="url" placeholder="https://example.com/image.png" {...field} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={onImageChangeHandler}
+                className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+      {currentImagePreview && (
+        <div className="mt-2">
+          <FormLabel>Image Preview</FormLabel>
+          <div className="relative w-32 h-32 mt-1 border rounded-md overflow-hidden">
+            <Image src={currentImagePreview} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="128px" />
+          </div>
+        </div>
+      )}
       <FormField
         control={formInstance.control}
         name="description"
@@ -261,7 +317,7 @@ export default function AdminProductsPage() {
           <h2 className="text-3xl font-bold tracking-tight text-primary">Manage Products</h2>
           <p className="text-muted-foreground">View, add, edit, or delete products from your inventory.</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={(isOpen) => { setIsAddDialogOpen(isOpen); if (!isOpen) { addForm.reset(); setImagePreview(null); } }}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <PlusCircle className="mr-2 h-5 w-5" /> Add New Product
@@ -276,10 +332,14 @@ export default function AdminProductsPage() {
             </DialogHeader>
             <Form {...addForm}>
               <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4 py-4">
-                <ProductFormFields formInstance={addForm} />
+                <ProductFormFields 
+                  formInstance={addForm} 
+                  currentImagePreview={imagePreview} 
+                  onImageChangeHandler={(e) => handleImageChange(e, addForm)}
+                />
                 <DialogFooter className="pt-4">
                   <DialogClose asChild>
-                    <Button type="button" variant="outline" onClick={() => addForm.reset()}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={() => { addForm.reset(); setImagePreview(null); }}>Cancel</Button>
                   </DialogClose>
                   <Button type="submit" disabled={addForm.formState.isSubmitting}>
                     {addForm.formState.isSubmitting ? (
@@ -298,8 +358,7 @@ export default function AdminProductsPage() {
         </Dialog>
       </div>
 
-      {/* Edit Product Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(isOpen) => { setIsEditDialogOpen(isOpen); if (!isOpen) { editForm.reset(); setSelectedProduct(null); setImagePreview(null); } }}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -309,10 +368,14 @@ export default function AdminProductsPage() {
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 py-4">
-              <ProductFormFields formInstance={editForm} />
+              <ProductFormFields 
+                formInstance={editForm} 
+                currentImagePreview={imagePreview} 
+                onImageChangeHandler={(e) => handleImageChange(e, editForm)}
+              />
               <DialogFooter className="pt-4">
                 <DialogClose asChild>
-                  <Button type="button" variant="outline" onClick={() => { editForm.reset(); setSelectedProduct(null); }}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => { editForm.reset(); setSelectedProduct(null); setImagePreview(null); }}>Cancel</Button>
                 </DialogClose>
                 <Button type="submit" disabled={editForm.formState.isSubmitting}>
                   {editForm.formState.isSubmitting ? (
@@ -330,7 +393,6 @@ export default function AdminProductsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Product Confirmation Dialog */}
        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -377,7 +439,11 @@ export default function AdminProductsPage() {
               {products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="hidden md:table-cell">
-                    <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded" data-ai-hint={product.dataAiHint || 'product image'} />
+                    {product.imageUrl ? (
+                       <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div>
+                    )}
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
@@ -402,11 +468,8 @@ export default function AdminProductsPage() {
           <div className="text-xs text-muted-foreground">
             Showing <strong>1-{products.length}</strong> of <strong>{products.length}</strong> products
           </div>
-          {/* Add pagination controls here if needed */}
         </CardFooter>
       </Card>
     </div>
   );
 }
-
-    

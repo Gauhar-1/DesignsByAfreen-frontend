@@ -6,7 +6,7 @@ export const adminNewProductSchema = z.object({
   category: z.string().min(2, "Category is required."),
   price: z.string().regex(/^\$?\d+(\.\d{1,2})?$/, "Price must be a valid monetary value (e.g., $19.99 or 19.99)."),
   stock: z.coerce.number().int().min(0, "Stock cannot be negative."),
-  imageUrl: z.string().url("Invalid image URL."),
+  imageUrl: z.string().optional().describe("URL or Data URI of the product image."),
   description: z.string().optional(),
   dataAiHint: z.string().max(50, "AI hint should be concise.").optional(),
 });
