@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarTrigger, // This is the trigger for desktop icon mode & mobile sheet
   SidebarInset,
+  useSidebar, // Import useSidebar hook
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import Logo from '@/components/icons/Logo';
@@ -32,6 +33,19 @@ const adminNavItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
 ];
 
+// Helper component to conditionally render the title
+const AdminSidebarTitleContent = () => {
+  const { isMobile } = useSidebar();
+  const logoComponent = <Logo className="text-lg group-data-[collapsible=icon]:hidden" />;
+
+  if (isMobile) {
+    // When mobile, the SidebarHeader contents are rendered inside a Sheet, so SheetTitle is appropriate
+    return <SheetTitle>{logoComponent}</SheetTitle>;
+  }
+  // On desktop, SidebarHeader is not inside a Sheet, so render the logo directly
+  return logoComponent;
+};
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
 
@@ -41,10 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
           <SidebarHeader className="p-4">
             <div className="flex items-center justify-between">
-              {/* Wrap Logo with SheetTitle for accessibility in mobile Sheet view */}
-              <SheetTitle>
-                <Logo className="text-lg group-data-[collapsible=icon]:hidden" />
-              </SheetTitle>
+              <AdminSidebarTitleContent />
               <div className="group-data-[collapsible=icon]:mx-auto">
                 {/* This SidebarTrigger is for desktop icon mode (collapsing to icons) */}
                 <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
