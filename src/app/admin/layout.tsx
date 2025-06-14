@@ -53,13 +53,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen bg-muted/30">
         <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
-          <SidebarHeader className="p-4">
-            <div className="flex items-center justify-between">
-              <AdminSidebarTitleContent />
-              <div className="group-data-[collapsible=icon]:mx-auto">
-                {/* This SidebarTrigger is for desktop icon mode (collapsing to icons) */}
-                <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
-              </div>
+          <SidebarHeader className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+            <AdminSidebarTitleContent />
+            <div className="group-data-[collapsible=icon]:mx-auto">
+              {/* This SidebarTrigger is for desktop icon mode (collapsing to icons) */}
+              <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
             </div>
           </SidebarHeader>
           <SidebarContent className="p-2">
