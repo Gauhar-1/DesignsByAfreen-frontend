@@ -1,21 +1,27 @@
 
 import type { Metadata } from 'next';
-import { mockPortfolioItems, Product } from '@/lib/mockData';
 import ProductCard from '@/components/shared/ProductCard';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+// import { Filter } from 'lucide-react'; // Icon can be part of the button text if desired
+import { fetchProducts, type Product } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Portfolio - Designs by Afreen',
   description: 'Explore the exquisite collections and designs by Designs by Afreen. Filter by category to find your perfect piece.',
 };
 
+// Fetch categories dynamically from products or define statically
+// For now, static to avoid over-complicating this step
 const categories = ['All', 'Bridal', 'Casual', 'Festive', 'Outerwear'];
 
-export default function PortfolioPage() {
-  // In a real app, filtering logic would be implemented here
-  const itemsToDisplay = mockPortfolioItems;
+export default async function PortfolioPage({ searchParams }: { searchParams?: { category?: string } }) {
+  const allProducts = await fetchProducts();
+  const selectedCategory = searchParams?.category || 'All';
+
+  const itemsToDisplay = selectedCategory === 'All'
+    ? allProducts
+    : allProducts.filter(product => product.category === selectedCategory);
 
   return (
     <Container className="py-12 md:py-16">
@@ -28,9 +34,13 @@ export default function PortfolioPage() {
 
       <div className="mb-8 flex flex-wrap justify-center gap-2">
         {categories.map(category => (
-          <Button key={category} variant={category === 'All' ? 'default' : 'outline'} className="text-sm">
-             {/* <Filter className="h-4 w-4 mr-2" /> Only for a dedicated filter button */}
-            {category}
+          <Button 
+            key={category} 
+            variant={category === selectedCategory ? 'default' : 'outline'} 
+            className="text-sm"
+            asChild
+          >
+            <a href={`/portfolio?category=${category}`}>{category}</a>
           </Button>
         ))}
       </div>

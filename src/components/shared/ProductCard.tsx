@@ -3,16 +3,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product } from '@/lib/mockData';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import type { Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
+import { addProductToCart } from '@/lib/api';
 
 interface ProductCardProps {
-  product: Product;
+  product: ApiProductType;
   className?: string;
 }
 
@@ -28,21 +29,30 @@ export default function ProductCard({ product, className }: ProductCardProps) {
     });
   };
 
-  const handleAddToCart = () => {
-    toast({
-      title: 'Added to Cart',
-      description: `${product.name} has been added to your cart.`,
-    });
-    // In a real app, you'd dispatch an action to update a global cart state here
-    console.log('Added to cart (simulated):', product);
+  const handleAddToCart = async () => {
+    try {
+      await addProductToCart(product.id, 1);
+      toast({
+        title: 'Added to Cart',
+        description: `${product.name} has been added to your cart.`,
+      });
+      // In a real app, you might update a global cart state or trigger a refetch
+      console.log('Added to cart (simulated):', product);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Could not add ${product.name} to cart.`,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
-    <Card className={cn("overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group", className)}>
-      <Link href={`/portfolio/${product.id}`} passHref>
+    <Card className={cn("overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group flex flex-col", className)}>
+      <Link href={`/portfolio/${product.id}`} passHref className="block">
         <div className="aspect-[3/4] overflow-hidden relative">
           <Image
-            src={product.imageUrl}
+            src={product.imageUrl || 'https://placehold.co/600x800.png'}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -60,14 +70,14 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       <CardContent className="p-4 pt-0">
         <p className="text-lg font-semibold text-primary">{product.price}</p>
       </CardContent>
-      <CardFooter className="p-4 flex justify-end items-center gap-3">
-        <Button variant="outline" size="sm" aria-label="Add to Wishlist" onClick={handleWishlistToggle}>
-          <Heart className="h-4 w-4" fill={isWishlisted ? 'hsl(var(--primary))' : 'none'} />
+      <CardFooter className="p-4 flex-wrap gap-2 mt-auto">
+        <Button variant="outline" size="sm" aria-label="Add to Wishlist" onClick={handleWishlistToggle} className="flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none">
+          <Heart className="h-4 w-4 mr-1 sm:mr-2" fill={isWishlisted ? 'hsl(var(--primary))' : 'none'} />
           Wishlist
         </Button>
-        <Button size="sm" aria-label="Add to Cart" onClick={handleAddToCart}>
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
+        <Button size="sm" aria-label="Add to Cart" onClick={handleAddToCart} disabled={product.stock === 0} className="flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none">
+          <ShoppingCart className="h-4 w-4 mr-1 sm:mr-2" />
+          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
         </Button>
       </CardFooter>
     </Card>

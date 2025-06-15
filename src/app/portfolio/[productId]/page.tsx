@@ -1,24 +1,24 @@
 
-import { use } from 'react'; // Added import
+import { use } from 'react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import Image from 'next/image';
-import { mockPortfolioItems, Product } from '@/lib/mockData';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { fetchProductById, fetchProducts } from '@/lib/api'; // Import fetchProducts for generateStaticParams
 
 type Props = {
-  params: { productId: string }; // This type describes the shape of the unwrapped params
+  params: { productId: string };
 };
 
 export async function generateMetadata(
-  { params: paramsFromProps }: Props, // Renamed to avoid conflict
+  { params: paramsFromProps }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const params = use(paramsFromProps); // Unwrap params
-  const product = mockPortfolioItems.find(p => p.id === params.productId);
+  const params = use(paramsFromProps); 
+  const product = await fetchProductById(params.productId);
   if (!product) {
     return {
       title: 'Product Not Found - Designs by Afreen',
@@ -30,9 +30,9 @@ export async function generateMetadata(
   };
 }
 
-export default function ProductDetailPage({ params: paramsFromProps }: Props) { // Renamed
-  const params = use(paramsFromProps); // Unwrap params
-  const product = mockPortfolioItems.find(p => p.id === params.productId);
+export default async function ProductDetailPage({ params: paramsFromProps }: Props) {
+  const params = use(paramsFromProps);
+  const product = await fetchProductById(params.productId);
 
   if (!product) {
     return (
@@ -62,7 +62,7 @@ export default function ProductDetailPage({ params: paramsFromProps }: Props) { 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
         <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-xl">
           <Image
-            src={product.imageUrl}
+            src={product.imageUrl || 'https://placehold.co/800x1000.png'}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -80,7 +80,6 @@ export default function ProductDetailPage({ params: paramsFromProps }: Props) { 
             <p>{product.description || "No description available."}</p>
           </div>
 
-          {/* Placeholder for size selector, fabric description etc. */}
           <div className="mb-8 space-y-4">
             <div>
               <h3 className="text-md font-semibold text-primary mb-2">Fabric:</h3>
@@ -94,12 +93,16 @@ export default function ProductDetailPage({ params: paramsFromProps }: Props) { 
                 ))}
               </div>
             </div>
+             <div>
+              <h3 className="text-md font-semibold text-primary mb-2">Stock:</h3>
+              <p className="text-foreground/80">{product.stock > 0 ? `${product.stock} units available` : 'Out of Stock'}</p>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto" disabled={product.stock === 0}>
               <ShoppingCart className="h-5 w-5 mr-2" />
-              Add to Cart
+              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button variant="outline" size="lg" className="w-full sm:w-auto">
               <Heart className="h-5 w-5 mr-2" />
@@ -112,9 +115,9 @@ export default function ProductDetailPage({ params: paramsFromProps }: Props) { 
   );
 }
 
-// To make sure dynamic routes are generated at build time if using SSG for these pages:
 export async function generateStaticParams() {
-  return mockPortfolioItems.map((product) => ({
+  const products = await fetchProducts();
+  return products.map((product) => ({
     productId: product.id,
   }));
 }
