@@ -1,4 +1,5 @@
 
+
 'use client'; 
 
 import Link from 'next/link';
@@ -106,7 +107,7 @@ export default function CheckoutPage() {
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate order placement
     toast({ title: 'Order Placed!', description: 'Thank you for your purchase. Your order confirmation will be sent to your email.' });
     setIsSubmittingForm(false); form.reset(); setSelectedPaymentMethod('cod');
-    const fileInput = document.getElementById('paymentScreenshotUri-input') as HTMLInputElement | null; if (fileInput) { fileInput.value = ''; } // Use a unique id if needed for reset
+    const fileInput = document.getElementById('paymentScreenshotUri-input') as HTMLInputElement | null; if (fileInput) { fileInput.value = ''; } 
     router.push('/');
   }
 
@@ -209,7 +210,6 @@ export default function CheckoutPage() {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  id="paymentScreenshotUri-input" // Changed id to avoid conflict if formItemId becomes 'paymentScreenshotUri'
                                   type="file"
                                   accept="image/*"
                                   ref={ref}
@@ -250,4 +250,3 @@ export default function CheckoutPage() {
     </Container>
   );
 }
-
