@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
           {error && <div className="text-center py-8 text-destructive">{error}</div>}
           {!isLoading && !error && (
             <Table>
-              <TableHeader> <TableRow> <TableHead className="w-12 hidden md:table-cell">Avatar</TableHead> <TableHead>Name</TableHead> <TableHead className="hidden sm:table-cell">Email</TableHead> <TableHead className="hidden sm:table-cell">Role</TableHead> <TableHead className="hidden md:table-cell">Status</TableHead> <TableHead className="hidden md:table-cell">Joined Date</TableHead> <TableHead className="text-right">Actions</TableHead> </TableRow> </TableHeader>
+              <TableHeader><TableRow><TableHead className="w-12 hidden md:table-cell">Avatar</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Email</TableHead><TableHead className="hidden sm:table-cell">Role</TableHead><TableHead className="hidden md:table-cell">Status</TableHead><TableHead className="hidden md:table-cell">Joined Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>

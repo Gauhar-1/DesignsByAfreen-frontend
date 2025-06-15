@@ -266,7 +266,7 @@ export default function AdminProductsPage() {
           {error && <div className="text-center py-8 text-destructive">{error}</div>}
           {!isLoading && !error && (
             <Table>
-              <TableHeader> <TableRow> <TableHead className="w-16 hidden md:table-cell">Image</TableHead> <TableHead>Name</TableHead> <TableHead className="hidden sm:table-cell">Category</TableHead> <TableHead className="hidden sm:table-cell">Price</TableHead> <TableHead className="hidden sm:table-cell text-center">Stock</TableHead> <TableHead className="text-right">Actions</TableHead> </TableRow> </TableHeader>
+              <TableHeader><TableRow><TableHead className="w-16 hidden md:table-cell">Image</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Category</TableHead><TableHead className="hidden sm:table-cell">Price</TableHead><TableHead className="hidden sm:table-cell text-center">Stock</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
