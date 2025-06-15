@@ -11,6 +11,7 @@ import { PlusCircle, Search, Edit2, Trash2, Loader2, UploadCloud, PackageSearch 
 import Image from 'next/image';
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
   DialogDescription,
   DialogFooter,
