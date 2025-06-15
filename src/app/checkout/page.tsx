@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label"; // Import standard Label
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, DollarSign, Lock, Paperclip, QrCode, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -160,10 +161,35 @@ export default function CheckoutPage() {
                 <CardHeader> <CardTitle className="text-2xl font-headline flex items-center"><DollarSign className="mr-2 h-6 w-6 text-accent" /> Payment Method</CardTitle> </CardHeader>
                 <CardContent className="space-y-6">
                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                      <FormItem className="space-y-3"> <FormControl> <RadioGroup onValueChange={(value) => { field.onChange(value); setSelectedPaymentMethod(value); }} defaultValue={field.value} className="flex flex-col space-y-2">
-                            <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all"> <FormControl> <RadioGroupItem value="cod" /> </FormControl> <FormLabel className="font-normal flex-grow cursor-pointer text-base"> <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> Cash on Delivery (COD) </FormLabel> </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all"> <FormControl> <RadioGroupItem value="upi" /> </FormControl> <FormLabel className="font-normal flex-grow cursor-pointer text-base"> <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> QR / UPI Payment </FormLabel> </FormItem>
-                      </RadioGroup> </FormControl> <FormMessage /> </FormItem> )}/>
+                      <FormItem className="space-y-3">
+                        <FormLabel className="text-base">Select Payment Method</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            ref={field.ref}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedPaymentMethod(value);
+                            }}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-2"
+                          >
+                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                              <RadioGroupItem value="cod" id="payment-cod" />
+                              <Label htmlFor="payment-cod" className="font-normal flex-grow cursor-pointer text-base">
+                                <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> Cash on Delivery (COD)
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                              <RadioGroupItem value="upi" id="payment-upi" />
+                              <Label htmlFor="payment-upi" className="font-normal flex-grow cursor-pointer text-base">
+                                <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> QR / UPI Payment
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
 
                   {selectedPaymentMethod === 'cod' && ( <div className="space-y-4 pt-4 border-t"> <p className="text-muted-foreground">You will pay the delivery person when your order arrives.</p> </div> )}
                   {selectedPaymentMethod === 'upi' && (
@@ -199,3 +225,4 @@ export default function CheckoutPage() {
     </Container>
   );
 }
+
