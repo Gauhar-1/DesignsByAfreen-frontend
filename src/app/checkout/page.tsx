@@ -72,15 +72,12 @@ export default function CheckoutPage() {
     },
   });
 
-  const handleScreenshotUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-    rhfOnChange: (value: string | undefined) => void
-  ) => {
+  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { 
         toast({ title: 'File too large', description: 'Please upload an image smaller than 5MB.', variant: 'destructive' });
-        rhfOnChange(undefined); // Update RHF state
+        form.setValue('paymentScreenshotUri', undefined);
         if (event.target) event.target.value = ''; 
         return;
       }
@@ -90,14 +87,14 @@ export default function CheckoutPage() {
           reader.onloadend = () => resolve(reader.result as string);
           reader.onerror = reject; reader.readAsDataURL(file);
         });
-        rhfOnChange(dataUri); // Update RHF state with the Data URI string
+        form.setValue('paymentScreenshotUri', dataUri);
       } catch (error) {
-        rhfOnChange(undefined); // Update RHF state
+        form.setValue('paymentScreenshotUri', undefined);
         if (event.target) event.target.value = '';
         toast({ title: 'Error uploading image', description: 'Could not process the image file. Please try another.', variant: 'destructive' });
       }
     } else {
-      rhfOnChange(undefined); // Update RHF state
+      form.setValue('paymentScreenshotUri', undefined);
     }
   };
 
@@ -117,9 +114,10 @@ export default function CheckoutPage() {
       paymentMethod: 'cod', upiReferenceNumber: '', paymentScreenshotUri: undefined,
     }); 
     setSelectedPaymentMethod('cod');
-    const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUri"]') as HTMLInputElement | null;
+    // Attempt to reset the file input visually by clearing its value property
+    const fileInput = document.querySelector('input[name="paymentScreenshotUri"]') as HTMLInputElement | null;
     if (fileInput) {
-      fileInput.value = '';
+      fileInput.value = ''; // This might not always work due to browser security for file inputs
     }
     router.push('/');
   }
@@ -180,11 +178,20 @@ export default function CheckoutPage() {
                         <FormControl>
                           <RadioGroup
                             ref={field.ref}
+                            name={field.name}
                             onValueChange={(value) => {
                               field.onChange(value);
                               setSelectedPaymentMethod(value);
+                              // Reset UPI fields if COD is selected
+                              if (value === 'cod') {
+                                form.setValue('upiReferenceNumber', '');
+                                form.setValue('paymentScreenshotUri', undefined);
+                                const fileInput = document.querySelector('input[name="paymentScreenshotUri"]') as HTMLInputElement | null;
+                                if (fileInput) fileInput.value = '';
+                              }
                             }}
-                            defaultValue={field.value}
+                            onBlur={field.onBlur}
+                            value={field.value} // Use field.value for controlled component
                             className="flex flex-col space-y-2"
                           >
                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
@@ -213,8 +220,8 @@ export default function CheckoutPage() {
                         <FormField control={form.control} name="upiReferenceNumber" render={({ field }) => ( <FormItem> <FormLabel>Transaction Reference Number</FormLabel> <FormControl> <Input placeholder="Enter your payment reference ID" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
                         <FormField
                           control={form.control}
-                          name="paymentScreenshotUri"
-                           render={({ field }) => ( // Use the full field object
+                          name="paymentScreenshotUri" // This name must match the schema and form.setValue
+                           render={({ field: formField }) => ( // Use a different name for the field object from RHF to avoid confusion
                             <FormItem>
                               <FormLabel className="flex items-center">
                                 <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB)
@@ -223,11 +230,11 @@ export default function CheckoutPage() {
                                 <Input
                                   type="file"
                                   accept="image/*"
-                                  ref={field.ref} // Pass ref from field
-                                  name={field.name} // Pass name from field
-                                  onBlur={field.onBlur} // Pass onBlur from field
-                                  // Do not set field.value for file inputs
-                                  onChange={(e) => handleScreenshotUpload(e, field.onChange)} // Pass RHF's onChange to custom handler
+                                  // Do NOT pass formField.ref, formField.name, formField.value, or formField.onChange directly for file inputs with custom handling
+                                  // The name attribute on the input can be set for semantic HTML / accessibility if desired, but RHF uses the name in control
+                                  name="paymentScreenshotUriInput" // A distinct name for the input element itself if needed
+                                  onBlur={formField.onBlur} // Can still use RHF's onBlur
+                                  onChange={handleScreenshotUpload} // Use the custom handler
                                   className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                 />
                               </FormControl>
@@ -262,3 +269,4 @@ export default function CheckoutPage() {
     </Container>
   );
 }
+
