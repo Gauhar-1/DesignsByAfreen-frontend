@@ -118,9 +118,9 @@ export default function CartPage() {
         <div className="text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-6" />
           <p className="text-xl text-muted-foreground mb-4">Your cart is currently empty.</p>
-          <Button asChild size="lg">
-            <Link href="/portfolio">Continue Shopping</Link>
-          </Button>
+          <Link href="/portfolio" passHref>
+            <Button size="lg">Continue Shopping</Button>
+          </Link>
         </div>
       ) : (
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
@@ -162,7 +162,11 @@ export default function CartPage() {
               <Separator />
               <div className="flex justify-between text-xl font-bold text-primary"> <span>Total</span> <span>${total.toFixed(2)}</span> </div>
             </CardContent>
-            <CardFooter className="p-0 pt-6"> <Button asChild size="lg" className="w-full text-base"> <Link href="/checkout">Proceed to Checkout</Link> </Button> </CardFooter>
+            <CardFooter className="p-0 pt-6">
+              <Link href="/checkout" passHref className="w-full">
+                <Button size="lg" className="w-full text-base">Proceed to Checkout</Button>
+              </Link>
+            </CardFooter>
           </Card>
         </div>
       )}
