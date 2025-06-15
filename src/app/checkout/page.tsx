@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, DollarSign, Lock, Paperclip, QrCode, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchCartItems, type CartItem as ApiCartItem } from '@/lib/api';
 
@@ -72,7 +72,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshotUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { 
@@ -87,14 +87,14 @@ export default function CheckoutPage() {
           reader.onloadend = () => resolve(reader.result as string);
           reader.onerror = reject; reader.readAsDataURL(file);
         });
-        form.setValue('paymentScreenshotUri', dataUri);
+        form.setValue('paymentScreenshotUri', dataUri, { shouldValidate: true });
       } catch (error) {
-        form.setValue('paymentScreenshotUri', undefined);
+        form.setValue('paymentScreenshotUri', undefined, { shouldValidate: true });
         if (event.target) event.target.value = '';
         toast({ title: 'Error uploading image', description: 'Could not process the image file. Please try another.', variant: 'destructive' });
       }
     } else {
-      form.setValue('paymentScreenshotUri', undefined);
+      form.setValue('paymentScreenshotUri', undefined, { shouldValidate: true });
     }
   };
 
@@ -114,7 +114,7 @@ export default function CheckoutPage() {
       paymentMethod: 'cod', upiReferenceNumber: '', paymentScreenshotUri: undefined,
     }); 
     setSelectedPaymentMethod('cod');
-    const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUri"]') as HTMLInputElement | null;
+    const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUriProxy"]') as HTMLInputElement | null;
     if (fileInput) {
       fileInput.value = '';
     }
@@ -173,18 +173,18 @@ export default function CheckoutPage() {
                 <CardContent className="space-y-6">
                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-base">Select Payment Method</FormLabel>
+                        <FormLabel className="text-base font-semibold">Select Payment Method</FormLabel>
                         <FormControl>
                           <RadioGroup
                             ref={field.ref}
                             name={field.name}
                             onValueChange={(value) => {
-                              field.onChange(value);
+                              field.onChange(value); // RHF's onChange
                               setSelectedPaymentMethod(value);
                               if (value === 'cod') {
-                                form.setValue('upiReferenceNumber', '');
-                                form.setValue('paymentScreenshotUri', undefined);
-                                const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUri"]') as HTMLInputElement | null;
+                                form.setValue('upiReferenceNumber', '', { shouldValidate: true });
+                                form.setValue('paymentScreenshotUri', undefined, { shouldValidate: true });
+                                const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUriProxy"]') as HTMLInputElement | null;
                                 if (fileInput) fileInput.value = '';
                               }
                             }}
@@ -215,11 +215,19 @@ export default function CheckoutPage() {
                     <div className="space-y-6 pt-4 border-t">
                        <p className="text-sm text-muted-foreground">Scan the QR code or use the UPI ID below to make your payment. Then, enter the transaction reference number and upload a screenshot of your payment.</p>
                        <div className="flex flex-col items-center gap-4"> <Image src="https://placehold.co/200x200.png" alt="UPI QR Code" width={150} height={150} data-ai-hint="qr code" className="rounded-md border" /> <p className="font-semibold text-lg">UPI ID: <span className="text-primary font-mono">atelierluxe@exampleupi</span></p> </div>
-                        <FormField control={form.control} name="upiReferenceNumber" render={({ field }) => ( <FormItem> <FormLabel>Transaction Reference Number</FormLabel> <FormControl> <Input placeholder="Enter your payment reference ID" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                        <FormField control={form.control} name="upiReferenceNumber" render={({ field }) => ( 
+                          <FormItem> 
+                            <FormLabel>Transaction Reference Number</FormLabel> 
+                            <FormControl> 
+                              <Input placeholder="Enter your payment reference ID" {...field} value={field.value || ''} /> 
+                            </FormControl> 
+                            <FormMessage /> 
+                          </FormItem> 
+                        )}/>
                         <FormField
                           control={form.control}
-                          name="paymentScreenshotUri"
-                           render={({ field: { name, onBlur } }) => ( 
+                          name="paymentScreenshotUri" // This name is used by RHF for value and errors
+                           render={({ field }) => ( // We get field for RHF context but handle input manually
                             <FormItem>
                               <FormLabel className="flex items-center">
                                 <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB)
@@ -228,9 +236,9 @@ export default function CheckoutPage() {
                                 <Input
                                   type="file"
                                   accept="image/*"
-                                  name={name}
-                                  onBlur={onBlur}
-                                  onChange={handleScreenshotUpload}
+                                  name="paymentScreenshotUriProxy" // Different name to avoid RHF conflicts if any
+                                  onBlur={field.onBlur} // Keep RHF's onBlur for touched state
+                                  onChange={handleScreenshotUpload} // Custom handler
                                   className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                 />
                               </FormControl>
