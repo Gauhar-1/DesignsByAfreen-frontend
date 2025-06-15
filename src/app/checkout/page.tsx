@@ -1,5 +1,4 @@
 
-
 'use client'; 
 
 import Link from 'next/link';
@@ -106,8 +105,18 @@ export default function CheckoutPage() {
     }
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate order placement
     toast({ title: 'Order Placed!', description: 'Thank you for your purchase. Your order confirmation will be sent to your email.' });
-    setIsSubmittingForm(false); form.reset(); setSelectedPaymentMethod('cod');
-    const fileInput = document.getElementById('paymentScreenshotUri-input') as HTMLInputElement | null; if (fileInput) { fileInput.value = ''; } 
+    setIsSubmittingForm(false); 
+    form.reset({
+      fullName: '', addressLine1: '', addressLine2: '', city: '', state: '', zipCode: '', country: '', email: '', phone: '',
+      paymentMethod: 'cod', upiReferenceNumber: '', paymentScreenshotUri: undefined,
+    }); 
+    setSelectedPaymentMethod('cod');
+    // Attempt to reset file input. This is browser-dependent.
+    // The form state for paymentScreenshotUri is reset above, which is the most important part.
+    const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUri"]') as HTMLInputElement | null;
+    if (fileInput) {
+      fileInput.value = '';
+    }
     router.push('/');
   }
 
@@ -175,13 +184,13 @@ export default function CheckoutPage() {
                           >
                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
                               <RadioGroupItem value="cod" id="payment-cod" />
-                              <Label htmlFor="payment-cod" className="font-normal flex-grow cursor-pointer text-base">
+                              <Label htmlFor="payment-cod" className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 font-normal flex-grow cursor-pointer text-base">
                                 <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> Cash on Delivery (COD)
                               </Label>
                             </div>
                              <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
                                <RadioGroupItem value="upi" id="payment-upi" />
-                              <Label htmlFor="payment-upi" className="font-normal flex-grow cursor-pointer text-base">
+                              <Label htmlFor="payment-upi" className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 font-normal flex-grow cursor-pointer text-base">
                                 <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> QR / UPI Payment
                               </Label>
                             </div>
@@ -212,7 +221,7 @@ export default function CheckoutPage() {
                                   name={field.name}
                                   onBlur={field.onBlur}
                                   onChange={(e) => {
-                                    field.onChange(e.target.files); // Important for RHF Controller
+                                    field.onChange(e.target.files); 
                                     handleScreenshotUpload(e);
                                   }}
                                   className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
