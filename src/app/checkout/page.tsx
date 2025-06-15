@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label"; // Import standard Label
+import { Label } from "@/components/ui/label";
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, DollarSign, Lock, Paperclip, QrCode, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -106,7 +106,7 @@ export default function CheckoutPage() {
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate order placement
     toast({ title: 'Order Placed!', description: 'Thank you for your purchase. Your order confirmation will be sent to your email.' });
     setIsSubmittingForm(false); form.reset(); setSelectedPaymentMethod('cod');
-    const fileInput = document.getElementById('paymentScreenshotUri') as HTMLInputElement | null; if (fileInput) { fileInput.value = ''; }
+    const fileInput = document.getElementById('paymentScreenshotUri-input') as HTMLInputElement | null; if (fileInput) { fileInput.value = ''; } // Use a unique id if needed for reset
     router.push('/');
   }
 
@@ -163,7 +163,6 @@ export default function CheckoutPage() {
                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-base">Select Payment Method</FormLabel>
-                        <FormControl>
                           <RadioGroup
                             ref={field.ref}
                             onValueChange={(value) => {
@@ -173,20 +172,23 @@ export default function CheckoutPage() {
                             defaultValue={field.value}
                             className="flex flex-col space-y-2"
                           >
-                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                              <RadioGroupItem value="cod" id="payment-cod" />
+                           <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                              <FormControl>
+                                 <RadioGroupItem value="cod" id="payment-cod" />
+                              </FormControl>
                               <Label htmlFor="payment-cod" className="font-normal flex-grow cursor-pointer text-base">
                                 <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> Cash on Delivery (COD)
                               </Label>
-                            </div>
-                            <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                              <RadioGroupItem value="upi" id="payment-upi" />
+                            </FormItem>
+                             <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                               <FormControl>
+                                <RadioGroupItem value="upi" id="payment-upi" />
+                               </FormControl>
                               <Label htmlFor="payment-upi" className="font-normal flex-grow cursor-pointer text-base">
                                 <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> QR / UPI Payment
                               </Label>
-                            </div>
+                            </FormItem>
                           </RadioGroup>
-                        </FormControl>
                         <FormMessage />
                       </FormItem>
                   )}/>
@@ -197,7 +199,30 @@ export default function CheckoutPage() {
                        <p className="text-sm text-muted-foreground">Scan the QR code or use the UPI ID below to make your payment. Then, enter the transaction reference number and upload a screenshot of your payment.</p>
                        <div className="flex flex-col items-center gap-4"> <Image src="https://placehold.co/200x200.png" alt="UPI QR Code" width={150} height={150} data-ai-hint="qr code" className="rounded-md border" /> <p className="font-semibold text-lg">UPI ID: <span className="text-primary font-mono">atelierluxe@exampleupi</span></p> </div>
                         <FormField control={form.control} name="upiReferenceNumber" render={({ field }) => ( <FormItem> <FormLabel>Transaction Reference Number</FormLabel> <FormControl> <Input placeholder="Enter your payment reference ID" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                        <FormField control={form.control} name="paymentScreenshotUri" render={() => ( <FormItem> <FormLabel className="flex items-center"> <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB) </FormLabel> <FormControl> <Input id="paymentScreenshotUri" type="file" accept="image/*" onChange={handleScreenshotUpload} className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/> </FormControl> <FormMessage /> </FormItem> )}/>
+                        <FormField
+                          control={form.control}
+                          name="paymentScreenshotUri"
+                          render={({ field: { ref, name, onBlur } }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB)
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="paymentScreenshotUri-input" // Changed id to avoid conflict if formItemId becomes 'paymentScreenshotUri'
+                                  type="file"
+                                  accept="image/*"
+                                  ref={ref}
+                                  name={name}
+                                  onBlur={onBlur}
+                                  onChange={handleScreenshotUpload}
+                                  className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                     </div> )}
                   <div className="flex items-center text-sm text-muted-foreground pt-4"> <Lock className="h-4 w-4 mr-2" /> <span>Your personal information is secure.</span> </div>
                 </CardContent>
