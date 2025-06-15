@@ -72,12 +72,17 @@ export default function CheckoutPage() {
     },
   });
 
-  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshotUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    rhfOnChange: (value: string | undefined) => void
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { 
         toast({ title: 'File too large', description: 'Please upload an image smaller than 5MB.', variant: 'destructive' });
-        form.setValue('paymentScreenshotUri', undefined); event.target.value = ''; return;
+        rhfOnChange(undefined); // Update RHF state
+        if (event.target) event.target.value = ''; 
+        return;
       }
       try {
         const dataUri = await new Promise<string>((resolve, reject) => {
@@ -85,13 +90,14 @@ export default function CheckoutPage() {
           reader.onloadend = () => resolve(reader.result as string);
           reader.onerror = reject; reader.readAsDataURL(file);
         });
-        form.setValue('paymentScreenshotUri', dataUri);
+        rhfOnChange(dataUri); // Update RHF state with the Data URI string
       } catch (error) {
-        form.setValue('paymentScreenshotUri', undefined); event.target.value = '';
+        rhfOnChange(undefined); // Update RHF state
+        if (event.target) event.target.value = '';
         toast({ title: 'Error uploading image', description: 'Could not process the image file. Please try another.', variant: 'destructive' });
       }
     } else {
-      form.setValue('paymentScreenshotUri', undefined);
+      rhfOnChange(undefined); // Update RHF state
     }
   };
 
@@ -103,7 +109,7 @@ export default function CheckoutPage() {
       console.log('UPI Reference:', data.upiReferenceNumber);
       console.log('Screenshot URI (first 100 chars):', data.paymentScreenshotUri?.substring(0,100) + '...');
     }
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate order placement
+    await new Promise(resolve => setTimeout(resolve, 2000)); 
     toast({ title: 'Order Placed!', description: 'Thank you for your purchase. Your order confirmation will be sent to your email.' });
     setIsSubmittingForm(false); 
     form.reset({
@@ -111,8 +117,6 @@ export default function CheckoutPage() {
       paymentMethod: 'cod', upiReferenceNumber: '', paymentScreenshotUri: undefined,
     }); 
     setSelectedPaymentMethod('cod');
-    // Attempt to reset file input. This is browser-dependent.
-    // The form state for paymentScreenshotUri is reset above, which is the most important part.
     const fileInput = document.querySelector('input[type="file"][name="paymentScreenshotUri"]') as HTMLInputElement | null;
     if (fileInput) {
       fileInput.value = '';
@@ -173,6 +177,7 @@ export default function CheckoutPage() {
                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-base">Select Payment Method</FormLabel>
+                        <FormControl>
                           <RadioGroup
                             ref={field.ref}
                             onValueChange={(value) => {
@@ -195,6 +200,7 @@ export default function CheckoutPage() {
                               </Label>
                             </div>
                           </RadioGroup>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                   )}/>
@@ -208,7 +214,7 @@ export default function CheckoutPage() {
                         <FormField
                           control={form.control}
                           name="paymentScreenshotUri"
-                           render={({ field }) => (
+                           render={({ field }) => ( // Use the full field object
                             <FormItem>
                               <FormLabel className="flex items-center">
                                 <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB)
@@ -217,13 +223,11 @@ export default function CheckoutPage() {
                                 <Input
                                   type="file"
                                   accept="image/*"
-                                  ref={field.ref}
-                                  name={field.name}
-                                  onBlur={field.onBlur}
-                                  onChange={(e) => {
-                                    field.onChange(e.target.files); 
-                                    handleScreenshotUpload(e);
-                                  }}
+                                  ref={field.ref} // Pass ref from field
+                                  name={field.name} // Pass name from field
+                                  onBlur={field.onBlur} // Pass onBlur from field
+                                  // Do not set field.value for file inputs
+                                  onChange={(e) => handleScreenshotUpload(e, field.onChange)} // Pass RHF's onChange to custom handler
                                   className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                 />
                               </FormControl>
@@ -258,4 +262,3 @@ export default function CheckoutPage() {
     </Container>
   );
 }
-
