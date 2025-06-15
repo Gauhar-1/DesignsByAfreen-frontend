@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Imported buttonVariants
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,6 +36,7 @@ import { adminNewProductSchema, type AdminNewProductInput } from '@/lib/schemas/
 import { useToast } from '@/hooks/use-toast';
 import { adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@/actions/productActions';
 import { fetchProducts, type Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
+import { cn } from '@/lib/utils';
 
 export default function AdminProductsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -215,7 +216,9 @@ export default function AdminProductsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div> <h2 className="text-3xl font-bold tracking-tight text-primary">Manage Products</h2> <p className="text-muted-foreground">View, add, edit, or delete products from your inventory.</p> </div>
         <Dialog open={isAddDialogOpen} onOpenChange={(isOpen) => { setIsAddDialogOpen(isOpen); if (!isOpen) { addForm.reset(); setImagePreview(null); } }}>
-          <DialogTrigger asChild> <Button className="w-full sm:w-auto"> <PlusCircle className="mr-2 h-5 w-5" /> Add New Product </Button> </DialogTrigger>
+          <DialogTrigger className={cn(buttonVariants(), "w-full sm:w-auto")}>
+            <PlusCircle className="mr-2 h-5 w-5" /> Add New Product
+          </DialogTrigger>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader> <DialogTitle>Add New Product</DialogTitle> <DialogDescription> Fill in the details below to add a new product to your store. </DialogDescription> </DialogHeader>
             <Form {...addForm}>
