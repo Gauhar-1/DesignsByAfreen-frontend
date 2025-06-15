@@ -173,22 +173,18 @@ export default function CheckoutPage() {
                             defaultValue={field.value}
                             className="flex flex-col space-y-2"
                           >
-                           <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                              <FormControl>
-                                 <RadioGroupItem value="cod" id="payment-cod" />
-                              </FormControl>
+                           <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                              <RadioGroupItem value="cod" id="payment-cod" />
                               <Label htmlFor="payment-cod" className="font-normal flex-grow cursor-pointer text-base">
                                 <Landmark className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> Cash on Delivery (COD)
                               </Label>
-                            </FormItem>
-                             <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                               <FormControl>
-                                <RadioGroupItem value="upi" id="payment-upi" />
-                               </FormControl>
+                            </div>
+                             <div className="flex items-center space-x-3 space-y-0 p-4 border rounded-md has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                               <RadioGroupItem value="upi" id="payment-upi" />
                               <Label htmlFor="payment-upi" className="font-normal flex-grow cursor-pointer text-base">
                                 <QrCode className="inline-block mr-2 h-5 w-5 text-muted-foreground" /> QR / UPI Payment
                               </Label>
-                            </FormItem>
+                            </div>
                           </RadioGroup>
                         <FormMessage />
                       </FormItem>
@@ -203,7 +199,7 @@ export default function CheckoutPage() {
                         <FormField
                           control={form.control}
                           name="paymentScreenshotUri"
-                          render={({ field: { ref, name, onBlur } }) => (
+                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center">
                                 <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Upload Payment Screenshot (max 5MB)
@@ -212,10 +208,13 @@ export default function CheckoutPage() {
                                 <Input
                                   type="file"
                                   accept="image/*"
-                                  ref={ref}
-                                  name={name}
-                                  onBlur={onBlur}
-                                  onChange={handleScreenshotUpload}
+                                  ref={field.ref}
+                                  name={field.name}
+                                  onBlur={field.onBlur}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.files); // Important for RHF Controller
+                                    handleScreenshotUpload(e);
+                                  }}
                                   className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                 />
                               </FormControl>
@@ -242,7 +241,7 @@ export default function CheckoutPage() {
                 <Separator />
                 <div className="flex justify-between text-xl font-bold text-primary"> <span>Total</span> <span>${total.toFixed(2)}</span> </div>
               </CardContent>
-              <CardFooter className="p-0 pt-6"> <Button type="submit" size="lg" className="w-full text-base" disabled={isSubmittingForm || isLoadingCart || cartItems.length === 0}> {isSubmittingForm ? 'Placing Order...' : 'Place Order'} </Button> </CardFooter>
+              <CardFooter className="p-0 pt-6"> <Button type="submit" size="lg" className="w-full text-base" disabled={isSubmittingForm || isLoadingCart || cartItems.length === 0}> {isSubmittingForm ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Placing Order...</>) : ('Place Order')} </Button> </CardFooter>
             </Card>
           </div>
         </form>
@@ -250,3 +249,4 @@ export default function CheckoutPage() {
     </Container>
   );
 }
+
