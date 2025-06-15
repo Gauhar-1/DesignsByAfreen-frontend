@@ -123,7 +123,14 @@ export default function CheckoutPage() {
 
   return (
     <Container className="py-12 md:py-16">
-      <div className="mb-8"> <Button variant="outline" asChild> <Link href="/cart"> <ChevronLeft className="h-4 w-4 mr-2" /> Back to Cart </Link> </Button> </div>
+      <div className="mb-8">
+        <Link href="/cart">
+            <Button variant="outline">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                 Back to Cart
+            </Button>
+        </Link>
+      </div>
       <header className="mb-12 text-center"> <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">Secure Checkout</h1> </header>
 
       <Form {...form}>
