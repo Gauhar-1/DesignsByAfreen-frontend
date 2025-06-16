@@ -39,9 +39,8 @@ export default function SignupPage() {
 
   async function onSubmit(data: SignupInput) {
     setIsLoading(true);
-    const { ...signupData } = data; // Exclude confirmPassword for the action
     try {
-      const result = await axios.post(`${apiUrl}/register`, signupData)
+      const result = await axios.post(`${apiUrl}/auth/register`, data)
       if (result.data.success) {
         toast({
           title: 'Account Created!',
@@ -98,7 +97,7 @@ export default function SignupPage() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
                       <Input type="tel" placeholder="e.g., 123-456-7890"  {...field} />
                     </FormControl>

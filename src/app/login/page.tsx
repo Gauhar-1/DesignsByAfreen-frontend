@@ -22,7 +22,7 @@ import axios from "axios";
 //   description: 'Access your Atelier Luxe account.',
 // };
 
-export const apiUrl = process.env.API_URL;
+export const apiUrl = "http://localhost:5000/api";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -40,7 +40,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginInput) {
     setIsLoading(true);
     try {
-      const result = await axios.post(`${apiUrl}/login`, data);
+      const result = await axios.post(`${apiUrl}/auth/login`, data);
       if (result.data.success) {
         toast({
           title: 'Login Successful',
