@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Container from '@/components/layout/Container';
@@ -16,11 +15,14 @@ import { loginSchema, type LoginInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import axios from "axios";
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Login - Atelier Luxe',
 //   description: 'Access your Atelier Luxe account.',
 // };
+
+export const apiUrl = process.env.API_URL;
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -30,7 +32,7 @@ export default function LoginPage() {
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      phoneNumber: '',
+      phone: '',
       password: '',
     },
   });
@@ -38,20 +40,20 @@ export default function LoginPage() {
   async function onSubmit(data: LoginInput) {
     setIsLoading(true);
     try {
-      const result = await loginUser(data);
-      if (result.success) {
+      const result = await axios.post(`${apiUrl}/login`, data);
+      if (result.data.success) {
         toast({
           title: 'Login Successful',
-          description: result.message,
+          description: result.data.message,
         });
         // TODO: Handle successful login (e.g., store token)
-        console.log('Token:', result.token);
+        console.log('Token:', result.data.token);
         form.reset();
         router.push('/'); // Navigate to home page
       } else {
         toast({
           title: 'Login Failed',
-          description: result.message || 'An unexpected error occurred.',
+          description: result.data.message || 'An unexpected error occurred.',
           variant: 'destructive',
         });
       }
@@ -79,7 +81,7 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="phoneNumber"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>

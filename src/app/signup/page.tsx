@@ -6,16 +6,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Container from '@/components/layout/Container';
 import { useToast } from '@/hooks/use-toast';
-import { signupUser } from '@/actions/authActions';
 import { signupSchema, type SignupInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { apiUrl } from '../login/page';
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Sign Up - Atelier Luxe',
@@ -31,7 +31,7 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: '',
-      email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
     },
@@ -39,22 +39,22 @@ export default function SignupPage() {
 
   async function onSubmit(data: SignupInput) {
     setIsLoading(true);
-    const { confirmPassword, ...signupData } = data; // Exclude confirmPassword for the action
+    const { ...signupData } = data; // Exclude confirmPassword for the action
     try {
-      const result = await signupUser(signupData);
-      if (result.success) {
+      const result = await axios.post(`${apiUrl}/register`, signupData)
+      if (result.data.success) {
         toast({
           title: 'Account Created!',
-          description: result.message,
+          description: result.data.message,
         });
         // TODO: Handle successful signup (e.g., redirect to login or auto-login)
-        console.log('User ID:', result.userId);
+        console.log('User ID:', result.data.userId);
         form.reset();
         router.push('/'); // Navigate to home page
       } else {
         toast({
           title: 'Signup Failed',
-          description: result.message || 'An unexpected error occurred.',
+          description: result.data.message || 'An unexpected error occurred.',
           variant: 'destructive',
         });
       }
@@ -95,12 +95,12 @@ export default function SignupPage() {
               />
               <FormField
                 control={form.control}
-                name="email"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
+                      <Input type="tel" placeholder="e.g., 123-456-7890"  {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
