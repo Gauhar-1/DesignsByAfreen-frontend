@@ -36,6 +36,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
     async function loadUsers() {
@@ -56,7 +57,7 @@ export default function AdminUsersPage() {
       }
     }
     loadUsers();
-  }, [toast]);
+  }, [toast, refresh]);
 
   const addUserForm = useForm<AdminNewUserInput>({
     resolver: zodResolver(adminNewUserSchema),
@@ -120,7 +121,7 @@ export default function AdminUsersPage() {
       });
       if (result.data.success && result.data.user) {
         toast({ title: `User ${actionName}`, description: result.data.message });
-        setUsers(prevUsers => prevUsers.map(u => u.id === userId ? result.data.user! : u));
+        setRefresh(prev => !prev);
       } else {
         toast({ title: 'Error', description: result.data.message , variant: 'destructive' });
       }
