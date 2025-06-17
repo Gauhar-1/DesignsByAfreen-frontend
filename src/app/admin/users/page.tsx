@@ -18,6 +18,8 @@ import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type A
 import { useToast } from '@/hooks/use-toast';
 import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 import { fetchUsers, type User as ApiUserType } from '@/lib/api';
+import { apiUrl } from '@/app/login/page';
+import axios from 'axios';
 
 const userRoles: ApiUserType['role'][] = ['Customer', 'Admin'];
 const userStatuses = ['Active', 'Blocked'];
@@ -40,8 +42,12 @@ export default function AdminUsersPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedUsers = await fetchUsers();
-        setUsers(fetchedUsers);
+        const fetchedUsers = await axios.get(`${apiUrl}/auth/users`);
+        if(!fetchedUsers.data){
+           toast({ title: 'Error', description: 'Could not fetch users.', variant: 'destructive' });
+           return;
+        }
+        setUsers(fetchedUsers.data);
       } catch (err) {
         setError('Failed to fetch users.');
         toast({ title: 'Error', description: 'Could not fetch users.', variant: 'destructive' });
@@ -105,15 +111,18 @@ export default function AdminUsersPage() {
   }
   
   const handleToggleBlockUser = async (userId: string, currentBlockedStatus: boolean | undefined) => {
-    const action = currentBlockedStatus ? adminUnblockUser : adminBlockUser;
-    const actionName = currentBlockedStatus ? 'Unblocked' : 'Blocked';
+    
+    const actionName = !currentBlockedStatus ;
     try {
-      const result = await action(userId);
-      if (result.success && result.user) {
-        toast({ title: `User ${actionName}`, description: result.message });
-        setUsers(prevUsers => prevUsers.map(u => u.id === userId ? result.user! : u));
+      const result = await axios.post(`${apiUrl}/auth/updateBlock`, {
+        userId,
+        actionName
+      });
+      if (result.data.success && result.data.user) {
+        toast({ title: `User ${actionName}`, description: result.data.message });
+        setUsers(prevUsers => prevUsers.map(u => u.id === userId ? result.data.user! : u));
       } else {
-        toast({ title: 'Error', description: result.message || `Failed to ${actionName.toLowerCase()} user.`, variant: 'destructive' });
+        toast({ title: 'Error', description: result.data.message , variant: 'destructive' });
       }
     } catch (err) {
       toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
@@ -145,7 +154,10 @@ export default function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div> <h2 className="text-3xl font-bold tracking-tight text-primary">Manage Users</h2> <p className="text-muted-foreground">View, add new, or block/unblock user accounts.</p> </div>
         <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-          <DialogTrigger asChild> <Button className="w-full sm:w-auto"> <UserPlus className="mr-2 h-5 w-5" /> Add New User </Button> </DialogTrigger>
+          {/* <DialogTrigger asChild> 
+            <div>
+          <Button className="w-full sm:w-auto"> <UserPlus className="mr-2 h-5 w-5" /> Add New User </Button>
+          </div> </DialogTrigger> */}
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader> <DialogTitle>Add New User</DialogTitle> <DialogDescription> Fill in the details below to create a new user account. </DialogDescription> </DialogHeader>
             <Form {...addUserForm}>
@@ -198,19 +210,19 @@ export default function AdminUsersPage() {
           {error && <div className="text-center py-8 text-destructive">{error}</div>}
           {!isLoading && !error && (
             <Table>
-              <TableHeader><TableRow><TableHead className="w-12 hidden md:table-cell">Avatar</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Email</TableHead><TableHead className="hidden sm:table-cell">Role</TableHead><TableHead className="hidden md:table-cell">Status</TableHead><TableHead className="hidden md:table-cell">Joined Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead className="w-12 hidden md:table-cell">Avatar</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Phone</TableHead><TableHead className="hidden sm:table-cell">Role</TableHead><TableHead className="hidden md:table-cell">Status</TableHead><TableHead className="hidden md:table-cell">Joined Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
+                  <TableRow key={user._id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
                     <TableCell className="hidden md:table-cell"> <Avatar className="h-8 w-8"> <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} /> <AvatarFallback>{user.name.substring(0,2).toUpperCase()}</AvatarFallback> </Avatar> </TableCell>
                     <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{user.phone}</TableCell>
                     <TableCell className="hidden sm:table-cell"> <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge> </TableCell>
                     <TableCell className="hidden md:table-cell"> {user.isBlocked ? ( <Badge variant="destructive">Blocked</Badge> ) : ( <Badge variant="default">Active</Badge> )} </TableCell>
-                    <TableCell className="hidden md:table-cell">{user.joined}</TableCell>
+                    <TableCell className="hidden md:table-cell">{user.timestamps}</TableCell>
                     <TableCell className="text-right">
                       {/* <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(user)} title="Edit User"> <Pencil className="h-4 w-4" /> <span className="sr-only">Edit User</span> </Button> */}
-                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user.id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}> {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />} <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span> </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user._id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}> {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />} <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span> </Button>
                     </TableCell>
                   </TableRow>
                 ))}

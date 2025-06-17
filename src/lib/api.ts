@@ -44,6 +44,9 @@ export interface Order {
 }
 
 export interface User {
+  timestamps: ReactNode;
+  phone: ReactNode;
+  _id: Key | null | undefined;
   id: string;
   name: string;
   email: string;
