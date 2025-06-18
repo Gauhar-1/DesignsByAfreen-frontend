@@ -37,6 +37,8 @@ import { useToast } from '@/hooks/use-toast';
 import { adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@/actions/productActions';
 import { fetchProducts, type Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
 import { cn } from '@/lib/utils';
+import axios from 'axios';
+import { apiUrl } from '@/app/login/page';
 
 export default function AdminProductsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -55,8 +57,8 @@ export default function AdminProductsPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedProducts = await fetchProducts();
-        setProducts(fetchedProducts);
+        const fetchedProducts = await axios.get(`${apiUrl}/products`);
+        setProducts(fetchedProducts.data);
       } catch (err) {
         setError('Failed to fetch products.');
         toast({ title: 'Error', description: 'Could not fetch products.', variant: 'destructive' });
@@ -128,15 +130,15 @@ export default function AdminProductsPage() {
 
   async function onAddSubmit(data: AdminNewProductInput) {
     try {
-      const result = await adminCreateProduct(data);
-      if (result.success && result.product) {
-        toast({ title: 'Product Created', description: result.message });
-        setProducts(prev => [result.product!, ...prev]);
+      const result = await axios.post(`${apiUrl}/products`, data);
+      if (result.data.success && result.data.product) {
+        toast({ title: 'Product Created', description: result.data.message });
+        setProducts(prev => [result.data.product!, ...prev]);
         addForm.reset();
         setImagePreview(null);
         setIsAddDialogOpen(false);
       } else {
-        toast({ title: 'Error', description: result.message || 'Failed to create product.', variant: 'destructive' });
+        toast({ title: 'Error', description: result.data.message || 'Failed to create product.', variant: 'destructive' });
       }
     } catch (err) {
       toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
@@ -146,16 +148,16 @@ export default function AdminProductsPage() {
   async function onEditSubmit(data: AdminNewProductInput) {
     if (!selectedProduct) return;
     try {
-      const result = await adminUpdateProduct(selectedProduct.id, data);
-      if (result.success && result.product) {
-        toast({ title: 'Product Updated', description: result.message });
-        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? result.product! : p));
+      const result = await axios.put(`${apiUrl}/products`, data, { params : { id : selectedProduct._id}});
+      if (result.data.success && result.data.product) {
+        toast({ title: 'Product Updated', description: result.data.message });
+        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? result.data.product! : p));
         editForm.reset();
         setImagePreview(null);
         setIsEditDialogOpen(false);
         setSelectedProduct(null);
       } else {
-        toast({ title: 'Error', description: result.message || 'Failed to update product.', variant: 'destructive' });
+        toast({ title: 'Error', description: result.data.message || 'Failed to update product.', variant: 'destructive' });
       }
     } catch (err) {
       toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
@@ -165,14 +167,14 @@ export default function AdminProductsPage() {
   async function onDeleteConfirm() {
     if (!selectedProduct) return;
     try {
-      const result = await adminDeleteProduct(selectedProduct.id);
-      if (result.success) {
-        toast({ title: 'Product Deleted', description: result.message });
+      const result = await axios.delete(`${apiUrl}/products`, { params: {id : selectedProduct._id} });
+      if (result.data.success) {
+        toast({ title: 'Product Deleted', description: result.data.message });
         setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
         setIsDeleteDialogOpen(false);
         setSelectedProduct(null);
       } else {
-        toast({ title: 'Error', description: result.message || 'Failed to delete product.', variant: 'destructive' });
+        toast({ title: 'Error', description: result.data.message || 'Failed to delete product.', variant: 'destructive' });
       }
     } catch (err) {
       toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
@@ -196,18 +198,47 @@ export default function AdminProductsPage() {
     formInstance: UseFormReturn<AdminNewProductInput>; currentImagePreview: string | null; onImageChangeHandler: (event: React.ChangeEvent<HTMLInputElement>) => void;
   }) => (
     <>
-      <FormField control={formInstance.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Product Name</FormLabel> <FormControl> <Input placeholder="e.g., Silk Scarf" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-      <FormField control={formInstance.control} name="category" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <FormControl> <Input placeholder="e.g., Accessories" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-      <FormField control={formInstance.control} name="price" render={({ field }) => ( <FormItem> <FormLabel>Price</FormLabel> <FormControl> <Input placeholder="e.g., $99.99 or 99.99" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-      <FormField control={formInstance.control} name="stock" render={({ field }) => ( <FormItem> <FormLabel>Stock Quantity</FormLabel> <FormControl> <Input type="number" placeholder="e.g., 50" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /> </FormControl> <FormMessage /> </FormItem> )}/>
-      <FormField control={formInstance.control} name="imageUrl" render={() => ( 
-          <FormItem> <FormLabel className="flex items-center"> <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" /> Product Image (max 2MB) </FormLabel> 
-            <FormControl> <Input type="file" accept="image/*" onChange={onImageChangeHandler} className="text-base py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/> </FormControl> 
-            <FormMessage /> 
-          </FormItem> )}/>
+      <FormField control={formInstance.control} name="name" render={({ field }) => ( 
+        <FormItem> <FormLabel>Product Name</FormLabel> <Input placeholder="e.g., Silk Scarf" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="category" render={({ field }) => ( 
+        <FormItem> <FormLabel>Category</FormLabel> <Input placeholder="e.g., Accessories" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="price" render={({ field }) => ( 
+        <FormItem> <FormLabel>Price</FormLabel> <Input placeholder="e.g., $99.99 or 99.99" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="stock" render={({ field }) => ( 
+        <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input type="number" placeholder="e.g., 50" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField
+        control={formInstance.control}
+        name="imageUrl"
+        render={({ field: { ref, name, onBlur } }) => ( 
+          <FormItem>
+            <FormLabel htmlFor={name} className="flex items-center">
+              <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" /> Product Image (max 2MB)
+            </FormLabel>
+            <Input
+              id={name}
+              type="file"
+              accept="image/*"
+              ref={ref} 
+              name={name} 
+              onBlur={onBlur} 
+              onChange={onImageChangeHandler}
+              className="text-base py-2 file:mr-4 file:py-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       {currentImagePreview && ( <div className="mt-2"> <FormLabel>Image Preview</FormLabel> <div className="relative w-32 h-32 mt-1 border rounded-md overflow-hidden"> <Image src={currentImagePreview} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="128px" /> </div> </div> )}
-      <FormField control={formInstance.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description (Optional)</FormLabel> <FormControl> <Textarea placeholder="Describe the product..." {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-      <FormField control={formInstance.control} name="dataAiHint" render={({ field }) => ( <FormItem> <FormLabel>AI Image Hint (Optional)</FormLabel> <FormControl> <Input placeholder="e.g., silk scarf floral" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+      <FormField control={formInstance.control} name="description" render={({ field }) => ( 
+        <FormItem> <FormLabel>Description (Optional)</FormLabel> <Textarea placeholder="Describe the product..." {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="dataAiHint" render={({ field }) => ( 
+        <FormItem> <FormLabel>AI Image Hint (Optional)</FormLabel> <Input placeholder="e.g., silk scarf floral" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
     </>
   );
 
@@ -225,7 +256,7 @@ export default function AdminProductsPage() {
               <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4 py-4">
                 <ProductFormFields formInstance={addForm} currentImagePreview={imagePreview} onImageChangeHandler={(e) => handleImageChange(e, addForm)}/>
                 <DialogFooter className="pt-4">
-                  <DialogClose asChild> <Button type="button" variant="outline" onClick={() => { addForm.reset(); setImagePreview(null); }}>Cancel</Button> </DialogClose>
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
                   <Button type="submit" disabled={addForm.formState.isSubmitting}> {addForm.formState.isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding...</>) : ('Add Product')} </Button>
                 </DialogFooter>
               </form>
@@ -241,7 +272,7 @@ export default function AdminProductsPage() {
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 py-4">
               <ProductFormFields formInstance={editForm} currentImagePreview={imagePreview} onImageChangeHandler={(e) => handleImageChange(e, editForm)}/>
               <DialogFooter className="pt-4">
-                <DialogClose asChild> <Button type="button" variant="outline" onClick={() => { editForm.reset(); setSelectedProduct(null); setImagePreview(null); }}>Cancel</Button> </DialogClose>
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={editForm.formState.isSubmitting}> {editForm.formState.isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : ('Save Changes')} </Button>
               </DialogFooter>
             </form>

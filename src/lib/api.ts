@@ -2,7 +2,10 @@
 // In-memory data store
 // Simulates a backend API
 
+import { Key, ReactNode } from "react";
+
 export interface Product {
+  _id: any;
   id: string;
   name: string;
   category: string;
