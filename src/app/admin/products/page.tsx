@@ -51,6 +51,7 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ refresh , setRefresh ] = useState(false);
 
   useEffect(() => {
     async function loadProducts() {
@@ -67,7 +68,7 @@ export default function AdminProductsPage() {
       }
     }
     loadProducts();
-  }, [toast]);
+  }, [toast, refresh]);
 
   const addForm = useForm<AdminNewProductInput>({
     resolver: zodResolver(adminNewProductSchema),
@@ -133,8 +134,8 @@ export default function AdminProductsPage() {
       const result = await axios.post(`${apiUrl}/products`, data);
       if (result.data.success && result.data.product) {
         toast({ title: 'Product Created', description: result.data.message });
-        setProducts(prev => [result.data.product!, ...prev]);
         addForm.reset();
+        setRefresh(prev => !prev); 
         setImagePreview(null);
         setIsAddDialogOpen(false);
       } else {
@@ -151,8 +152,8 @@ export default function AdminProductsPage() {
       const result = await axios.put(`${apiUrl}/products`, data, { params : { id : selectedProduct._id}});
       if (result.data.success && result.data.product) {
         toast({ title: 'Product Updated', description: result.data.message });
-        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? result.data.product! : p));
         editForm.reset();
+        setRefresh(prev => !prev); 
         setImagePreview(null);
         setIsEditDialogOpen(false);
         setSelectedProduct(null);

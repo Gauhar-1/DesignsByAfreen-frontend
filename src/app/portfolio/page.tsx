@@ -4,7 +4,9 @@ import ProductCard from '@/components/shared/ProductCard';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 // import { Filter } from 'lucide-react'; // Icon can be part of the button text if desired
-import { fetchProducts, type Product } from '@/lib/api';
+import {  type Product } from '@/lib/api';
+import axios from 'axios';
+import { apiUrl } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'Portfolio - Designs by Afreen',
@@ -13,15 +15,16 @@ export const metadata: Metadata = {
 
 // Fetch categories dynamically from products or define statically
 // For now, static to avoid over-complicating this step
-const categories = ['All', 'Bridal', 'Casual', 'Festive', 'Outerwear'];
+const categories = ['All', 'Lehenga', 'Patiyala', 'Straight Pant', 'Sarara'];
 
 export default async function PortfolioPage({ searchParams }: { searchParams?: { category?: string } }) {
-  const allProducts = await fetchProducts();
+  const allProducts = await axios.get(`${apiUrl}/products`);
   const selectedCategory = searchParams?.category || 'All';
 
   const itemsToDisplay = selectedCategory === 'All'
-    ? allProducts
-    : allProducts.filter(product => product.category === selectedCategory);
+    ? allProducts.data
+    : allProducts.data.filter((product: { category: string; }) => product.category === selectedCategory);
+
 
   return (
     <Container className="py-12 md:py-16">
