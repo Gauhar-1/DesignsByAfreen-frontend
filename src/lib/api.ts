@@ -71,6 +71,7 @@ export interface Testimonial {
 }
 
 export interface CartItem extends Product {
+  productId: string;
   quantity: number;
 }
 

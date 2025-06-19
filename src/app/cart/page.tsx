@@ -1,7 +1,7 @@
 
 'use client'; 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Container from '@/components/layout/Container';
@@ -12,6 +12,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { fetchCartItems, updateCartItemQuantity, removeProductFromCart, type CartItem as ApiCartItem } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+import { apiUrl } from '@/lib/utils';
+import debounce from 'lodash.debounce';
+import { getUserIdFromToken } from '@/lib/auth';
+
 
 
 export default function CartPage() {
@@ -19,14 +24,16 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+   const debounceMapRef = useRef<Record<string, ReturnType<typeof debounce>>>({});
+   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadCart() {
       try {
         setIsLoading(true);
         setError(null);
-        const items = await fetchCartItems();
-        setCartItems(items);
+        const items = await axios.get(`${apiUrl}/cart`, { params : { id : userId}});
+        setCartItems(items.data.items || []);
       } catch (err) {
         setError('Failed to load cart items.');
         toast({ title: 'Error', description: 'Could not load your cart.', variant: 'destructive' });
@@ -35,40 +42,92 @@ export default function CartPage() {
       }
     }
     loadCart();
-  }, [toast]);
+  }, [toast, userId]);
 
-  const handleUpdateQuantity = async (id: string, newQuantity: number) => {
-    const originalQuantity = cartItems.find(item => item.id === id)?.quantity;
-    const optimisticUpdate = cartItems.map(item =>
-      item.id === id ? { ...item, quantity: newQuantity < 1 ? 0 : newQuantity } : item
-    ).filter(item => item.quantity > 0);
-    
-    setCartItems(optimisticUpdate);
+  const debouncedUpdateQuantity = useCallback((productId: string, quantity: number) => {
+  if (!debounceMapRef.current[productId]) {
+    debounceMapRef.current[productId] = debounce(async (pid: string, qty: number) => {
+      try {
+        await axios.put(`${apiUrl}/cart`, {
+          productId: pid,
+          quantity: qty,
+          userId
+        });
+        toast({ title: qty < 1 ? 'Item Removed' : 'Quantity Updated' });
+      } catch (err) {
+        toast({ title: 'Error', description: 'Failed to update quantity.', variant: 'destructive' });
+      }
+    }, 500);
+  }
+  debounceMapRef.current[productId](productId, quantity);
+}, [toast]);
 
-    try {
-      await updateCartItemQuantity(id, newQuantity);
-      // If server confirms, cartItems is already updated optimistically.
-      // If newQuantity was < 1, the item is already removed optimistically.
-      // If server sync is needed after update (e.g., getting new totals), refetch cart.
-      // For this mock, optimistic is fine.
-       if (newQuantity < 1) {
-         toast({ title: 'Item Removed', description: `${cartItems.find(item => item.id === id)?.name} removed from cart.` });
-       } else {
-         toast({ title: 'Quantity Updated' });
-       }
-    } catch (err) {
-      toast({ title: 'Error', description: 'Failed to update quantity.', variant: 'destructive' });
-      // Revert optimistic update
-      setCartItems(prevItems => prevItems.map(item => item.id === id ? {...item, quantity: originalQuantity || 1} : item));
+const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+  setCartItems(prevItems => {
+    const originalItem = prevItems.find(item => item.productId === productId);
+    const updatedItems = prevItems
+      .map(item =>
+        item.productId === productId
+          ? { ...item, quantity: newQuantity < 1 ? 0 : newQuantity }
+          : item
+      )
+      .filter(item => item.quantity > 0);
+
+    debouncedUpdateQuantity(productId, newQuantity);
+
+    if (newQuantity < 1 && originalItem) {
+      toast({
+        title: 'Item Removed',
+        description: `${originalItem.name} removed from cart.`,
+      });
     }
-  };
+    return updatedItems;
+  });
+};
+
+useEffect(() => {
+  const id = getUserIdFromToken();
+  if (id) setUserId(id);
+}, []);
+
+
+  // const handleUpdateQuantity = async (id: string, newQuantity: number) => {
+  //   const originalQuantity = cartItems.find(item => item.id === id)?.quantity;
+  //   const optimisticUpdate = cartItems.map(item =>
+  //     item.id === id ? { ...item, quantity: newQuantity < 1 ? 0 : newQuantity } : item
+  //   ).filter(item => item.quantity > 0);
+    
+  //   setCartItems(optimisticUpdate);
+
+  //   try {
+  //     await updateCartItemQuantity(id, newQuantity);
+  //     // If server confirms, cartItems is already updated optimistically.
+  //     // If newQuantity was < 1, the item is already removed optimistically.
+  //     // If server sync is needed after update (e.g., getting new totals), refetch cart.
+  //     // For this mock, optimistic is fine.
+  //      if (newQuantity < 1) {
+  //        toast({ title: 'Item Removed', description: `${cartItems.find(item => item.id === id)?.name} removed from cart.` });
+  //      } else {
+  //        toast({ title: 'Quantity Updated' });
+  //      }
+  //   } catch (err) {
+  //     toast({ title: 'Error', description: 'Failed to update quantity.', variant: 'destructive' });
+  //     // Revert optimistic update
+  //     setCartItems(prevItems => prevItems.map(item => item.id === id ? {...item, quantity: originalQuantity || 1} : item));
+  //   }
+  // };
 
   const handleRemoveItem = async (id: string) => {
-    const itemName = cartItems.find(item => item.id === id)?.name;
+    const itemName = cartItems.find(item => item.productId === id)?.name;
     const originalItems = [...cartItems];
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+    setCartItems(prevItems => prevItems.filter(item => item.productId !== id));
     try {
-      await removeProductFromCart(id);
+      await axios.delete(`${apiUrl}/cart`, {
+        params: {
+          productId: id,
+          userId
+        }
+      });
       toast({ title: 'Item Removed', description: `${itemName} removed from cart.`});
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to remove item.', variant: 'destructive' });
@@ -145,11 +204,11 @@ export default function CartPage() {
                   <p className="text-lg font-semibold text-primary mt-1">{item.price}</p>
                 </div>
                 <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                  <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} aria-label="Decrease quantity"> <Minus className="h-4 w-4" /> </Button>
-                  <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))} className="w-16 text-center h-9" min="1"/>
-                  <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)} aria-label="Increase quantity"> <Plus className="h-4 w-4" /> </Button>
+                  <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)} aria-label="Decrease quantity"> <Minus className="h-4 w-4" /> </Button>
+                  <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.productId, parseInt(e.target.value))} className="w-16 text-center h-9" min="1"/>
+                  <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)} aria-label="Increase quantity"> <Plus className="h-4 w-4" /> </Button>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="text-destructive hover:text-destructive/80 ml-auto sm:ml-4" aria-label="Remove item"> <Trash2 className="h-5 w-5" /> </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId)} className="text-destructive hover:text-destructive/80 ml-auto sm:ml-4" aria-label="Remove item"> <Trash2 className="h-5 w-5" /> </Button>
               </Card>
             ))}
           </div>

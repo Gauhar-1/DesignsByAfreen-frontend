@@ -18,8 +18,8 @@ import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type A
 import { useToast } from '@/hooks/use-toast';
 import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 import { fetchUsers, type User as ApiUserType } from '@/lib/api';
-import { apiUrl } from '@/app/login/page';
 import axios from 'axios';
+import { apiUrl } from '@/lib/utils';
 
 const userRoles: ApiUserType['role'][] = ['Customer', 'Admin'];
 const userStatuses = ['Active', 'Blocked'];
@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
                     <TableCell className="hidden md:table-cell">{user.timestamps}</TableCell>
                     <TableCell className="text-right">
                       {/* <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(user)} title="Edit User"> <Pencil className="h-4 w-4" /> <span className="sr-only">Edit User</span> </Button> */}
-                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user._id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}> {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />} <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span> </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user._id as string ?? '', user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}> {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />} <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span> </Button>
                     </TableCell>
                   </TableRow>
                 ))}

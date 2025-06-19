@@ -16,13 +16,14 @@ import { useState } from 'react';
 import { Loader2, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from "axios";
+import { apiUrl } from '@/lib/utils';
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Login - Atelier Luxe',
 //   description: 'Access your Atelier Luxe account.',
 // };
 
-export const apiUrl = "http://localhost:5000/api";
+// export const apiUrl = "http://localhost:5000/api";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -47,7 +48,7 @@ export default function LoginPage() {
           description: result.data.message,
         });
         // TODO: Handle successful login (e.g., store token)
-        console.log('Token:', result.data.token);
+        localStorage.setItem('token', result.data.token);
         form.reset();
         router.push('/'); // Navigate to home page
       } else {

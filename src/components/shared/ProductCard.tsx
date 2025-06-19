@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { apiUrl, cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
 import { addProductToCart } from '@/lib/api';
+import axios from 'axios';
+import { getUserIdFromToken } from '@/lib/auth';
 
 interface ProductCardProps {
   product: ApiProductType;
@@ -20,6 +22,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, className }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
 
   const handleWishlistToggle = () => {
     setIsWishlisted(!isWishlisted);
@@ -29,9 +32,22 @@ export default function ProductCard({ product, className }: ProductCardProps) {
     });
   };
 
+  useEffect(() => {
+    const id = getUserIdFromToken();
+    if (id) setUserId(id);
+  }, []);
+
   const handleAddToCart = async () => {
     try {
-      await addProductToCart(product.id, 1);
+      await axios.post(`${apiUrl}/cart`, {
+        productId: product.id,
+        quantity: 1,
+        userId,
+        name: product.name,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        category: product.category,
+      });
       toast({
         title: 'Added to Cart',
         description: `${product.name} has been added to your cart.`,

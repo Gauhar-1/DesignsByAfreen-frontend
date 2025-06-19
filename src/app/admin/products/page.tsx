@@ -36,9 +36,8 @@ import { adminNewProductSchema, type AdminNewProductInput } from '@/lib/schemas/
 import { useToast } from '@/hooks/use-toast';
 import { adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@/actions/productActions';
 import { fetchProducts, type Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
-import { cn } from '@/lib/utils';
+import { apiUrl, cn } from '@/lib/utils';
 import axios from 'axios';
-import { apiUrl } from '@/app/login/page';
 
 export default function AdminProductsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

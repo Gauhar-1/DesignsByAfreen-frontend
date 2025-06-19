@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { Loader2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { apiUrl } from '../login/page';
+import { apiUrl } from '@/lib/utils';
 
 // export const metadata: Metadata = { // Cannot be used in client component
 //   title: 'Sign Up - Atelier Luxe',
@@ -47,7 +47,7 @@ export default function SignupPage() {
           description: result.data.message,
         });
         // TODO: Handle successful signup (e.g., redirect to login or auto-login)
-        console.log('User ID:', result.data.userId);
+        localStorage.setItem('token', result.data.token);
         form.reset();
         router.push('/'); // Navigate to home page
       } else {
