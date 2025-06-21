@@ -26,14 +26,15 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: string;
+  referenceNumber: string;
+  _id: string;
   customer: string;
-  email: string;
+  phone: string;
   date: string; // ISO string or 'YYYY-MM-DD'
   total: string; // Formatted string like '$1250.00'
   status: 'Shipped' | 'Processing' | 'Delivered' | 'Cancelled';
   paymentStatus: 'Paid' | 'Pending' | 'Refunded' | 'Failed';
-  paymentMethod: 'Credit Card' | 'PayPal' | 'COD' | 'UPI';
+  paymentMethod:  'COD' | 'UPI';
   items: OrderItem[];
   shippingAddress: {
     fullName: string;
@@ -44,6 +45,8 @@ export interface Order {
     zipCode: string;
     country: string;
   };
+  upiReferenceNumber?: string;
+  paymentScreenshotUri?: string;
 }
 
 export interface User {

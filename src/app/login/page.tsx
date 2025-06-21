@@ -48,6 +48,10 @@ export default function LoginPage() {
           description: result.data.message,
         });
         // TODO: Handle successful login (e.g., store token)
+        if(!result.data.token){
+            console.log("Token not found", result.data.token)
+          }
+          console.log("Token found", result.data.token)
         localStorage.setItem('token', result.data.token);
         form.reset();
         router.push('/'); // Navigate to home page

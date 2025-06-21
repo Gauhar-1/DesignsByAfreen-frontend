@@ -10,7 +10,6 @@ import { apiUrl, cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
-import { addProductToCart } from '@/lib/api';
 import axios from 'axios';
 import { getUserIdFromToken } from '@/lib/auth';
 
@@ -34,13 +33,18 @@ export default function ProductCard({ product, className }: ProductCardProps) {
 
   useEffect(() => {
     const id = getUserIdFromToken();
-    if (id) setUserId(id);
+    if (id) { 
+      setUserId(id)
+    }
+    else{
+      console.log('User ID not found in token');
+    }
   }, []);
 
   const handleAddToCart = async () => {
     try {
       await axios.post(`${apiUrl}/cart`, {
-        productId: product.id,
+        productId: product._id,
         quantity: 1,
         userId,
         name: product.name,
@@ -65,7 +69,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
 
   return (
     <Card className={cn("overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group flex flex-col", className)}>
-      <Link href={`/portfolio/${product.id}`} passHref className="block">
+      <Link href={`/portfolio/${product._id}`} passHref className="block">
         <div className="aspect-[3/4] overflow-hidden relative">
           <Image
             src={product.imageUrl || 'https://placehold.co/600x800.png'}
@@ -78,7 +82,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
         </div>
       </Link>
       <CardHeader className="p-4">
-        <Link href={`/portfolio/${product.id}`} passHref>
+        <Link href={`/portfolio/${product._id}`} passHref>
             <CardTitle className="text-lg font-headline hover:text-primary transition-colors truncate">{product.name}</CardTitle>
         </Link>
         <p className="text-xs text-muted-foreground uppercase tracking-wider">{product.category}</p>

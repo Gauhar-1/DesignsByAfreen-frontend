@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Trash2, Minus, Plus, ShoppingBag, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { fetchCartItems, updateCartItemQuantity, removeProductFromCart, type CartItem as ApiCartItem } from '@/lib/api';
+import {type CartItem as ApiCartItem } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { apiUrl } from '@/lib/utils';
@@ -27,7 +27,20 @@ export default function CartPage() {
    const debounceMapRef = useRef<Record<string, ReturnType<typeof debounce>>>({});
    const [userId, setUserId] = useState<string | null>(null);
 
+   useEffect(() => {
+     const id = getUserIdFromToken();
+     if (id) { 
+       setUserId(id)
+     }
+     else{
+       console.log('User ID not found in token');
+     }
+   }, []);
+
   useEffect(() => {
+
+     if (!userId) return;
+
     async function loadCart() {
       try {
         setIsLoading(true);
@@ -44,14 +57,17 @@ export default function CartPage() {
     loadCart();
   }, [toast, userId]);
 
+
+  
+
   const debouncedUpdateQuantity = useCallback((productId: string, quantity: number) => {
   if (!debounceMapRef.current[productId]) {
-    debounceMapRef.current[productId] = debounce(async (pid: string, qty: number) => {
+    debounceMapRef.current[productId] = debounce(async (pid: string, qty: number, uid: string | null) => {
       try {
         await axios.put(`${apiUrl}/cart`, {
           productId: pid,
           quantity: qty,
-          userId
+           userId: uid,
         });
         toast({ title: qty < 1 ? 'Item Removed' : 'Quantity Updated' });
       } catch (err) {
@@ -59,8 +75,8 @@ export default function CartPage() {
       }
     }, 500);
   }
-  debounceMapRef.current[productId](productId, quantity);
-}, [toast]);
+  debounceMapRef.current[productId](productId, quantity, userId);
+}, [toast, userId]);
 
 const handleUpdateQuantity = (productId: string, newQuantity: number) => {
   setCartItems(prevItems => {
@@ -85,37 +101,7 @@ const handleUpdateQuantity = (productId: string, newQuantity: number) => {
   });
 };
 
-useEffect(() => {
-  const id = getUserIdFromToken();
-  if (id) setUserId(id);
-}, []);
 
-
-  // const handleUpdateQuantity = async (id: string, newQuantity: number) => {
-  //   const originalQuantity = cartItems.find(item => item.id === id)?.quantity;
-  //   const optimisticUpdate = cartItems.map(item =>
-  //     item.id === id ? { ...item, quantity: newQuantity < 1 ? 0 : newQuantity } : item
-  //   ).filter(item => item.quantity > 0);
-    
-  //   setCartItems(optimisticUpdate);
-
-  //   try {
-  //     await updateCartItemQuantity(id, newQuantity);
-  //     // If server confirms, cartItems is already updated optimistically.
-  //     // If newQuantity was < 1, the item is already removed optimistically.
-  //     // If server sync is needed after update (e.g., getting new totals), refetch cart.
-  //     // For this mock, optimistic is fine.
-  //      if (newQuantity < 1) {
-  //        toast({ title: 'Item Removed', description: `${cartItems.find(item => item.id === id)?.name} removed from cart.` });
-  //      } else {
-  //        toast({ title: 'Quantity Updated' });
-  //      }
-  //   } catch (err) {
-  //     toast({ title: 'Error', description: 'Failed to update quantity.', variant: 'destructive' });
-  //     // Revert optimistic update
-  //     setCartItems(prevItems => prevItems.map(item => item.id === id ? {...item, quantity: originalQuantity || 1} : item));
-  //   }
-  // };
 
   const handleRemoveItem = async (id: string) => {
     const itemName = cartItems.find(item => item.productId === id)?.name;
@@ -136,7 +122,7 @@ useEffect(() => {
   };
 
   const subtotal = cartItems.reduce((acc, item) => {
-    const price = parseFloat(item.price.replace('$', ''));
+    const price = parseFloat(item.price);
     return acc + price * item.quantity;
   }, 0);
 
@@ -158,7 +144,8 @@ useEffect(() => {
         <h1 className="text-3xl font-bold text-destructive mb-2">Error Loading Cart</h1>
         <p className="text-muted-foreground mb-4">{error}</p>
         <Button onClick={async () => {
-             try { setIsLoading(true); setError(null); const items = await fetchCartItems(); setCartItems(items); }
+             try { setIsLoading(true); setError(null);  const items = await axios.get(`${apiUrl}/cart`, { params : { id : userId}});
+        setCartItems(items.data.items || []);}
              catch (err) { setError('Failed to load cart items.'); }
              finally { setIsLoading(false); }
         }}>Try Again</Button>
@@ -185,7 +172,7 @@ useEffect(() => {
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-2 space-y-6">
             {cartItems.map(item => (
-              <Card key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 shadow-md">
+              <Card key={item._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 shadow-md">
                 <div className="relative w-24 h-32 sm:w-32 sm:h-40 rounded-md overflow-hidden flex-shrink-0">
                   <Image
                     src={item.imageUrl || 'https://placehold.co/128x160.png'}
