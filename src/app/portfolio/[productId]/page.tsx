@@ -7,34 +7,41 @@ import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { fetchProductById, fetchProducts } from '@/lib/api'; // Import fetchProducts for generateStaticParams
+import { apiUrl } from '@/lib/utils';
+import axios from 'axios';
 
 type Props = {
   params: { productId: string };
 };
 
 export async function generateMetadata(
-  { params: paramsFromProps }: Props,
+  { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const params = use(paramsFromProps); 
-  const product = await fetchProductById(params.productId);
-  if (!product) {
+   const productId = params.productId;
+  const result = await axios.get(`${apiUrl}/products/byId`,{
+     params: { id: productId }
+  });
+  if (!result.data) {
     return {
       title: 'Product Not Found - Designs by Afreen',
     };
   }
+
+  const product = result.data.product;
   return {
     title: `${product.name} - Designs by Afreen`,
     description: product.description || `Details for ${product.name}.`,
   };
 }
 
-export default async function ProductDetailPage({ params: paramsFromProps }: Props) {
-  const params = use(paramsFromProps);
-  const product = await fetchProductById(params.productId);
+export default async function ProductDetailPage({ params }: Props) {
+  const productId = params.productId  ;
+  const result = await axios.get(`${apiUrl}/products/byId`,{
+     params: { id: productId}
+  });
 
-  if (!product) {
+  if (!result.data) {
     return (
       <Container className="py-12 md:py-16 text-center">
         <h1 className="text-3xl font-bold text-destructive mb-4">Product Not Found</h1>
@@ -48,6 +55,9 @@ export default async function ProductDetailPage({ params: paramsFromProps }: Pro
       </Container>
     );
   }
+  
+  const product = result.data.product;
+  // console.log(product.data.product);
 
   return (
     <Container className="py-12 md:py-16">
@@ -116,8 +126,23 @@ export default async function ProductDetailPage({ params: paramsFromProps }: Pro
 }
 
 export async function generateStaticParams() {
-  const products = await fetchProducts();
-  return products.map((product) => ({
-    productId: product.id,
+  const products = await axios.get(`${apiUrl}/products`);
+  interface Product {
+    _id: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    category?: string;
+    price?: string | number;
+    stock: number;
+    dataAiHint?: string;
+  }
+
+  interface ProductsResponse {
+    data: Product[];
+  }
+
+  return (products as ProductsResponse).data.map((product: Product) => ({
+    productId: product._id,
   }));
 }
