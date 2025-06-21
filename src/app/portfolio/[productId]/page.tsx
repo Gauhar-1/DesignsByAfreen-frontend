@@ -91,10 +91,10 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
 
           <div className="mb-8 space-y-4">
-            <div>
+            {/* <div>
               <h3 className="text-md font-semibold text-primary mb-2">Fabric:</h3>
               <p className="text-foreground/80">Premium Silk Blend (example)</p>
-            </div>
+            </div> */}
             <div>
               <h3 className="text-md font-semibold text-primary mb-2">Available Sizes:</h3>
               <div className="flex gap-2">

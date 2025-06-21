@@ -19,6 +19,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchCartItems, type CartItem as ApiCartItem } from '@/lib/api';
+import { getUserIdFromToken } from '@/lib/auth';
+import axios from 'axios';
+import { apiUrl } from '@/lib/utils';
 
 const addressFormSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
@@ -47,14 +50,27 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<ApiCartItem[]>([]);
   const [isLoadingCart, setIsLoadingCart] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [ prices, setPrices ] = useState(0);
 
   useEffect(() => {
+       const id = getUserIdFromToken();
+       if (id) { 
+         setUserId(id)
+       }
+       else{
+         console.log('User ID not found in token');
+       }
+     }, []);
+
+  useEffect(() => {
+     if (!userId) return;
     setIsMounted(true);
     async function loadCart() {
       try {
         setIsLoadingCart(true);
-        const items = await fetchCartItems();
-        setCartItems(items);
+        const items = await axios.get(`${apiUrl}/cart`, { params : { id : userId}});
+        setCartItems(items.data.items || []);
       } catch (err) {
         toast({ title: 'Error', description: 'Could not load cart for summary.', variant: 'destructive' });
       } finally {
@@ -62,7 +78,7 @@ export default function CheckoutPage() {
       }
     }
     loadCart();
-  }, [toast]);
+  }, [toast, userId]);
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -106,7 +122,12 @@ export default function CheckoutPage() {
       console.log('UPI Reference:', data.upiReferenceNumber);
       console.log('Screenshot URI (first 100 chars):', data.paymentScreenshotUri?.substring(0,100) + '...');
     }
-    await new Promise(resolve => setTimeout(resolve, 2000)); 
+    await axios.post(`${apiUrl}/orders`, { 
+      data,
+      cartItems,
+      userId,
+      prices,
+    })
     toast({ title: 'Order Placed!', description: 'Thank you for your purchase. Your order confirmation will be sent to your email.' });
     setIsSubmittingForm(false); 
     form.reset({
@@ -122,16 +143,17 @@ export default function CheckoutPage() {
   }
 
   const subtotal = cartItems.reduce((acc, item) => {
-    const price = parseFloat(item.price.replace('$', ''));
+    const price = parseFloat(item.price);
     return acc + price * item.quantity;
   }, 0);
   const shipping = cartItems.length > 0 ? 15.00 : 0;
   const total = subtotal + shipping;
 
+  setPrices(total);
+
   if (!isMounted) {
     return ( <Container className="py-12 md:py-16 text-center"> <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" /> <h1 className="text-3xl font-bold text-primary mb-2">Loading Checkout...</h1> </Container> );
   }
-
 
   return (
     <Container className="py-12 md:py-16">

@@ -58,8 +58,6 @@ export default function CartPage() {
   }, [toast, userId]);
 
 
-  
-
   const debouncedUpdateQuantity = useCallback((productId: string, quantity: number) => {
   if (!debounceMapRef.current[productId]) {
     debounceMapRef.current[productId] = debounce(async (pid: string, qty: number, uid: string | null) => {
@@ -172,7 +170,7 @@ const handleUpdateQuantity = (productId: string, newQuantity: number) => {
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-2 space-y-6">
             {cartItems.map(item => (
-              <Card key={item._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 shadow-md">
+              <Card key={item.productId} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 shadow-md">
                 <div className="relative w-24 h-32 sm:w-32 sm:h-40 rounded-md overflow-hidden flex-shrink-0">
                   <Image
                     src={item.imageUrl || 'https://placehold.co/128x160.png'}
@@ -184,7 +182,7 @@ const handleUpdateQuantity = (productId: string, newQuantity: number) => {
                   />
                 </div>
                 <div className="flex-grow">
-                  <Link href={`/portfolio/${item.id}`} passHref>
+                  <Link href={`/portfolio/${item.productId}`} passHref>
                     <h2 className="text-lg font-semibold font-headline hover:text-primary transition-colors">{item.name}</h2>
                   </Link>
                   <p className="text-sm text-muted-foreground">{item.category}</p>

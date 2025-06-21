@@ -51,7 +51,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams?: {
       {itemsToDisplay.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {itemsToDisplay.map((product: Product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       ) : (
