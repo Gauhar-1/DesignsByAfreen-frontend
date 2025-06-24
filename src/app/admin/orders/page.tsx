@@ -111,7 +111,7 @@ export default function AdminOrdersPage() {
   const onShippingUpdateSubmit = async (status: OrderShippingUpdateInput) => {
     if (!selectedOrderForShipping) return;
     try {
-      const result = await axios.put(`${apiUrl}/order/shipping-status`, { status }, { params : { orderId: selectedOrderForShipping._id } });
+      const result = await axios.put(`${apiUrl}/order/shipping-status`,  status , { params : { orderId: selectedOrderForShipping._id } });
       if (result.data.success && result.data.order) {
         toast({
           title: 'Shipping Updated',

@@ -122,7 +122,7 @@ export default function CheckoutPage() {
       console.log('UPI Reference:', data.upiReferenceNumber);
       console.log('Screenshot URI (first 100 chars):', data.paymentScreenshotUri?.substring(0,100) + '...');
     }
-    await axios.post(`${apiUrl}/orders`, { 
+    await axios.post(`${apiUrl}/order`, { 
       data,
       cartItems,
       userId,
@@ -142,14 +142,16 @@ export default function CheckoutPage() {
     router.push('/');
   }
 
+ useEffect(() => {
   const subtotal = cartItems.reduce((acc, item) => {
     const price = parseFloat(item.price);
     return acc + price * item.quantity;
   }, 0);
-  const shipping = cartItems.length > 0 ? 15.00 : 0;
+  const shipping = cartItems.length > 0 ? 15.0 : 0;
   const total = subtotal + shipping;
-
   setPrices(total);
+}, [cartItems]);
+
 
   if (!isMounted) {
     return ( <Container className="py-12 md:py-16 text-center"> <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" /> <h1 className="text-3xl font-bold text-primary mb-2">Loading Checkout...</h1> </Container> );
@@ -279,13 +281,13 @@ export default function CheckoutPage() {
               <CardContent className="p-0 space-y-4">
                 {isLoadingCart ? <div className="text-center py-4"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground"/></div> : 
                 cartItems.length > 0 ? (
-                  cartItems.map(item => ( <div key={item.id} className="flex justify-between items-center text-sm text-foreground/90"> <div> <p className="font-medium">{item.name}</p> <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p> </div> <p>{item.price}</p> </div> ))
+                  cartItems.map(item => ( <div key={item.productId} className="flex justify-between items-center text-sm text-foreground/90"> <div> <p className="font-medium">{item.name}</p> <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p> </div> <p>{item.price}</p> </div> ))
                 ) : <p className="text-sm text-muted-foreground">Your cart is empty.</p>}
                 <Separator />
-                <div className="flex justify-between text-foreground/90"> <span>Subtotal</span> <span>${subtotal.toFixed(2)}</span> </div>
-                <div className="flex justify-between text-foreground/90"> <span>Shipping</span> <span>${shipping.toFixed(2)}</span> </div>
+                <div className="flex justify-between text-foreground/90"> <span>Subtotal</span> <span>₹{prices.toFixed(2)}</span> </div>
+                <div className="flex justify-between text-foreground/90"> <span>Shipping</span> <span>₹15</span> </div>
                 <Separator />
-                <div className="flex justify-between text-xl font-bold text-primary"> <span>Total</span> <span>${total.toFixed(2)}</span> </div>
+                <div className="flex justify-between text-xl font-bold text-primary"> <span>Total</span> <span>₹{prices.toFixed(2)}</span> </div>
               </CardContent>
               <CardFooter className="p-0 pt-6"> <Button type="submit" size="lg" className="w-full text-base" disabled={isSubmittingForm || isLoadingCart || cartItems.length === 0}> {isSubmittingForm ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Placing Order...</>) : ('Place Order')} </Button> </CardFooter>
             </Card>
