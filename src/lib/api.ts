@@ -30,11 +30,11 @@ export interface Order {
   _id: string;
   customer: string;
   phone: string;
-  date: string; // ISO string or 'YYYY-MM-DD'
+  createdAt: string; // ISO string or 'YYYY-MM-DD'
   total: string; // Formatted string like '$1250.00'
   status: 'Shipped' | 'Processing' | 'Delivered' | 'Cancelled';
   paymentStatus: 'Paid' | 'Pending' | 'Refunded' | 'Failed';
-  paymentMethod:  'COD' | 'UPI';
+  paymentMethod:  'cod' | 'upi';
   items: OrderItem[];
   shippingAddress: {
     fullName: string;

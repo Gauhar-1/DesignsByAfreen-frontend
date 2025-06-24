@@ -136,7 +136,7 @@ export default function AdminOrdersPage() {
     if (!selectedOrderForVerification) return;
     setIsVerifying(true);
     try {
-      const result = await axios.put(`${apiUrl}/order/payment-status`,{ isApproved }, { params: { orderId: selectedOrderForVerification._id } });
+      const result = await axios.put(`${apiUrl}/order/payment-status`, { isApproved : isApproved }, { params: { orderId: selectedOrderForVerification._id } });
       if (result.data.success && result.data.order) {
         toast({
           title: 'Payment Verified',
@@ -256,7 +256,7 @@ export default function AdminOrdersPage() {
                     <TableRow key={order._id}>
                       <TableCell className="font-medium">{order._id}</TableCell>
                       <TableCell>{order.customer}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{order.date}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{order.createdAt}</TableCell>
                       <TableCell className="hidden md:table-cell">{order.total}</TableCell>
                       <TableCell> <Badge variant={getStatusBadgeVariant(order.status)}> {order.status} </Badge> </TableCell>
                       <TableCell className="hidden md:table-cell"> <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}> {order.paymentStatus} </Badge> </TableCell>
@@ -270,7 +270,7 @@ export default function AdminOrdersPage() {
                             <Truck className="h-4 w-4" />
                             <span className="sr-only">Update Shipping</span>
                           </Button>
-                          {order.paymentMethod === 'UPI' && order.paymentStatus === 'Pending' && (
+                          {order.paymentMethod === 'upi' && order.paymentStatus === 'Pending' && (
                             <Button variant="outline" size="sm" className="hover:text-primary" onClick={() => openVerifyDialog(order)} title="Verify Payment">
                               <ShieldCheck className="h-4 w-4 mr-1" />
                               Verify
@@ -324,7 +324,7 @@ export default function AdminOrdersPage() {
                     <CardTitle className="text-lg flex items-center gap-2"><CalendarDays size={18} /> Order Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <p><strong>Date:</strong> {selectedOrder.date}</p>
+                    <p><strong>Date:</strong> {selectedOrder.createdAt}</p>
                     <div className="flex items-center text-sm"><strong className="mr-1">Status:</strong> <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>{selectedOrder.status}</Badge></div>
                     <p><strong>Total:</strong> <span className="font-semibold">{selectedOrder.total}</span></p>
                   </CardContent>
@@ -424,7 +424,7 @@ export default function AdminOrdersPage() {
                 <h3 className="font-semibold text-lg mb-2">Details</h3>
                 <div className="space-y-2 text-sm">
                   <p><strong>UTR/Ref No:</strong></p>
-                  <p className="font-mono bg-muted p-2 rounded-md break-all">{selectedOrderForVerification.referenceNumber || 'Not Provided'}</p>
+                  <p className="font-mono bg-muted p-2 rounded-md break-all">{selectedOrderForVerification.upiReferenceNumber || 'Not Provided'}</p>
                   <p><strong>Amount:</strong> {selectedOrderForVerification.total}</p>
                 </div>
               </div>
