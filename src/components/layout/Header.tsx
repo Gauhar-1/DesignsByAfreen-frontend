@@ -19,12 +19,21 @@ const navItems = [
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  // const { user, logout } = useAuth(); // Placeholder
-  const user = null; // Replace with actual user state
+  const [ user, setUser ] = useState< Boolean | null>(null); 
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() =>{
+     const token = localStorage.getItem('token');
+     if(token){
+      setUser(true);
+     }
+     else{
+      setUser(false);
+     }
+  }, [])
 
 
   const toggleMobileMenu = () => {
@@ -136,7 +145,17 @@ export default function Header() {
                   {/* <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-foreground hover:text-primary transition-colors py-2">Profile</Link>
                   <Button variant="outline" className="w-full" onClick={async () => { await logoutUserAction(); setIsMobileMenuOpen(false); }}>Logout</Button> */}
                    <span className="block text-base font-medium text-foreground py-2">Welcome, User!</span>
-                   <Button variant="outline" className="w-full">Logout</Button>
+                   <Button
+  variant="outline"
+  size="sm"
+  onClick={() => {
+    localStorage.removeItem('token');
+    setUser(null);
+  }}
+>
+  Logout
+</Button>
+
                 </>
               ) : (
                 <>
