@@ -1,11 +1,20 @@
+"use client"
 
 import Link from 'next/link';
 import { Instagram, Twitter, Facebook, Shield } from 'lucide-react';
 import Logo from '@/components/icons/Logo';
 import Container from '@/components/layout/Container';
+import { useEffect, useState } from 'react';
+import { getUserRoleFromToken } from '@/lib/auth';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [ role, setRole ] = useState<string | null>(null);
+
+  useEffect(()=>{
+    const decodedRole = getUserRoleFromToken();
+    setRole(decodedRole);
+  },[])
 
   return (
     <footer className="bg-muted/50 border-t border-border/40">
@@ -32,10 +41,13 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
           <p>&copy; {currentYear} Designs by Afreen. All rights reserved.</p>
           <div className="mt-2">
-            <Link href="/admin" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center">
-              <Shield className="h-3 w-3 mr-1" />
-              Admin Panel
-            </Link>
+           { role === 'admin' && (
+  <Link href="/admin" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center">
+    <Shield className="h-3 w-3 mr-1" />
+    Admin Panel
+  </Link>
+) }
+
           </div>
         </div>
       </Container>

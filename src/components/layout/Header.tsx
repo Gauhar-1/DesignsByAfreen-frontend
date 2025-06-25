@@ -98,7 +98,16 @@ export default function Header() {
                 </Link>
                 <Button variant="outline" size="sm" onClick={async () => await logoutUserAction()}>Logout</Button> */}
                 <span className="text-sm">Welcome, User!</span> 
-                <Button variant="outline" size="sm">Logout</Button>
+                 <Button
+  variant="outline"
+  size="sm"
+  onClick={() => {
+    localStorage.removeItem('token');
+    setUser(null);
+  }}
+>
+  Logout
+</Button>
               </>
             ) : (
               <>
