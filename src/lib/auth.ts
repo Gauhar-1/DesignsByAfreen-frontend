@@ -32,7 +32,7 @@ export function getUserRoleFromToken(): string | null {
   try {
     const decoded = jwtDecode<{ role: string }>(token);
     if(!decoded.role){
-      console.log("Couldn't get the decoded userId")
+      console.log("Couldn't get the decoded Role")
       return null;
     }
     return decoded.role;

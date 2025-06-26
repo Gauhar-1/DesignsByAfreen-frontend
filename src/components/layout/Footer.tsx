@@ -12,9 +12,20 @@ export default function Footer() {
   const [ role, setRole ] = useState<string | null>(null);
 
   useEffect(()=>{
-    const decodedRole = getUserRoleFromToken();
-    setRole(decodedRole);
-  },[])
+    const checkRole = ()=>{
+      const decodedRole = getUserRoleFromToken();
+
+      if(!decodedRole){
+        console.log('No role found in token');
+        return;
+      }
+      console.log('Role found in token');
+
+      setRole(decodedRole);
+    }
+
+    checkRole();
+  },[ getUserRoleFromToken ]);
 
   return (
     <footer className="bg-muted/50 border-t border-border/40">
