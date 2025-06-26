@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 
 import { use } from 'react';
 import type { Metadata, ResolvingMetadata } from 'next';
@@ -18,22 +20,33 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-   const productId = params.productId;
-  const result = await axios.get(`${apiUrl}/products/byId`,{
-     params: { id: productId }
-  });
-  if (!result.data) {
+  const productId = params.productId;
+
+  try {
+    const result = await axios.get(`${apiUrl}/products/byId`, {
+      params: { id: productId },
+    });
+
+    const product = result.data?.product;
+
+    if (!product) {
+      return {
+        title: 'Product Not Found - Designs by Afreen',
+      };
+    }
+
     return {
-      title: 'Product Not Found - Designs by Afreen',
+      title: `${product.name} - Designs by Afreen`,
+      description: product.description || `Details for ${product.name}.`,
+    };
+  } catch (error) {
+    return {
+      title: 'Product - Designs by Afreen',
+      description: 'View product details from Designs by Afreen.',
     };
   }
-
-  const product = result.data.product;
-  return {
-    title: `${product.name} - Designs by Afreen`,
-    description: product.description || `Details for ${product.name}.`,
-  };
 }
+
 
 export default async function ProductDetailPage({ params }: Props) {
   const productId = params.productId  ;
@@ -125,24 +138,24 @@ export default async function ProductDetailPage({ params }: Props) {
   );
 }
 
-export async function generateStaticParams() {
-  const products = await axios.get(`${apiUrl}/products`);
-  interface Product {
-    _id: string;
-    name: string;
-    description?: string;
-    imageUrl?: string;
-    category?: string;
-    price?: string | number;
-    stock: number;
-    dataAiHint?: string;
-  }
+// export async function generateStaticParams() {
+//   const products = await axios.get(`${apiUrl}/products`);
+//   interface Product {
+//     _id: string;
+//     name: string;
+//     description?: string;
+//     imageUrl?: string;
+//     category?: string;
+//     price?: string | number;
+//     stock: number;
+//     dataAiHint?: string;
+//   }
 
-  interface ProductsResponse {
-    data: Product[];
-  }
+//   interface ProductsResponse {
+//     data: Product[];
+//   }
 
-  return (products as ProductsResponse).data.map((product: Product) => ({
-    productId: product._id,
-  }));
-}
+//   return (products as ProductsResponse).data.map((product: Product) => ({
+//     productId: product._id,
+//   }));
+// }
