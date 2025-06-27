@@ -427,34 +427,40 @@ export default function AdminOrdersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isUpdateShippingDialogOpen} onOpenChange={setIsUpdateShippingDialogOpen}>
+       <Dialog open={isUpdateShippingDialogOpen} onOpenChange={(isOpen) => { setIsUpdateShippingDialogOpen(isOpen); if (!isOpen) { shippingForm.reset(); setSelectedOrderForShipping(null); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Update Shipping Status</DialogTitle>
             <DialogDescription> Update the shipping status for order {selectedOrderForShipping?._id}. </DialogDescription>
           </DialogHeader>
+           <Form {...shippingForm}>
             <form onSubmit={shippingForm.handleSubmit(onShippingUpdateSubmit)} className="space-y-4 py-4">
-              <FormItem>
-                <FormLabel>Order Status</FormLabel>
-                <Select onValueChange={shippingForm.setValue.bind(shippingForm, 'status')} defaultValue={shippingForm.getValues('status')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select new status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orderStatusOptions.map(status => (<SelectItem key={status} value={status}>{status}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-                <FormMessage>{shippingForm.formState.errors.status?.message}</FormMessage>
-              </FormItem>
+              <FormField
+                control={shippingForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Order Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select new status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orderStatusOptions.map(status => (<SelectItem key={status} value={status}>{status}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter className="pt-4">
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" onClick={() => { shippingForm.reset(); setSelectedOrderForShipping(null); }}>Cancel</Button>
-                </DialogClose>
+                <Button type="button" variant="outline" onClick={() => setIsUpdateShippingDialogOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={shippingForm.formState.isSubmitting}>
                   {shippingForm.formState.isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : ('Save Changes')}
                 </Button>
               </DialogFooter>
             </form>
+             </Form>
         </DialogContent>
       </Dialog>
       
