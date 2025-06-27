@@ -22,10 +22,10 @@ export default function ContactPage() {
       </header>
 
       <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
-        <div className="bg-card p-8 rounded-lg shadow-xl">
+        {/* <div className="bg-card p-8 rounded-lg shadow-xl">
           <h2 className="text-2xl font-headline text-primary mb-6">Send Us a Message</h2>
           <ContactForm />
-        </div>
+        </div> */}
         
         <div className="space-y-8">
           <div className="bg-card p-8 rounded-lg shadow-xl">

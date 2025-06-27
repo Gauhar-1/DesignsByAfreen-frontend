@@ -2,10 +2,11 @@
 import ProductCard from '@/components/shared/ProductCard';
 import Container from '@/components/layout/Container';
 import { fetchProducts, type Product } from '@/lib/api';
+import axios from 'axios';
 
 export default async function FeaturedCollections() {
-  const allProducts = await fetchProducts();
-  const featuredItems = allProducts.slice(0, 4); 
+  const allProducts = await axios.get<Product[]>(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+  const featuredItems = allProducts.data.slice(0, 4); 
 
   return (
     <section className="py-16 md:py-24 bg-background">
@@ -17,7 +18,7 @@ export default async function FeaturedCollections() {
         {featuredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {featuredItems.map((product: Product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         ) : (
