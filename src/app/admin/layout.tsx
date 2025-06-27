@@ -2,25 +2,21 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger, // This is the trigger for desktop icon mode & mobile sheet
-  SidebarInset,
-  useSidebar, // Import useSidebar hook
-} from '@/components/ui/sidebar';
 import Link from 'next/link';
-import Logo from '@/components/icons/Logo';
-import { Package, ShoppingCart, Users, LayoutDashboard, LogOut, PanelLeft } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import Logo from '@/components/icons/Logo';
+import {
+  Package,
+  ShoppingCart,
+  Users,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SheetTitle } from '@/components/ui/sheet'; // Import SheetTitle
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -33,81 +29,96 @@ const adminNavItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
 ];
 
-// Helper component to conditionally render the title
-const AdminSidebarTitleContent = () => {
-  const { isMobile } = useSidebar();
-  const logoComponent = <Logo className="text-lg group-data-[collapsible=icon]:hidden" />;
-
-  if (isMobile) {
-    // When mobile, the SidebarHeader contents are rendered inside a Sheet, so SheetTitle is appropriate
-    return <SheetTitle>{logoComponent}</SheetTitle>;
-  }
-  // On desktop, SidebarHeader is not inside a Sheet, so render the logo directly
-  return logoComponent;
-};
-
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <SidebarProvider defaultOpen>
-      <div className="flex min-h-screen bg-muted/30">
-        <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
-          <SidebarHeader className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
-            <AdminSidebarTitleContent />
-            <div className="group-data-[collapsible=icon]:mx-auto">
-              {/* This SidebarTrigger is for desktop icon mode (collapsing to icons) */}
-              <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
-            </div>
-          </SidebarHeader>
-          <SidebarContent className="p-2">
-            <SidebarMenu>
-              {adminNavItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
-                      tooltip={item.label}
-                      isActive={pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))}
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:hover:bg-sidebar-primary/90"
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter className="p-2 mt-auto border-t border-sidebar-border">
-            <SidebarMenu>
-               <SidebarMenuItem>
-                <Link href="/" legacyBehavior passHref>
-                    <SidebarMenuButton 
-                      tooltip="Back to Site"
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    >
-                        <LogOut className="h-5 w-5 rotate-180" />
-                        <span>Back to Site</span>
-                    </SidebarMenuButton>
-                </Link>
-               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
-        <SidebarInset className="flex-1 flex flex-col overflow-y-auto bg-background">
-          <header className="sticky top-0 z-[1000] flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 shadow-sm">
-            {/* This SidebarTrigger is for opening the mobile sheet (off-canvas) */}
-            <SidebarTrigger variant="ghost" size="icon" className="md:hidden text-foreground">
-              <PanelLeft className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
-            </SidebarTrigger>
-             <h1 className="text-xl sm:text-2xl font-semibold font-headline text-primary">Admin Panel</h1>
-          </header>
-          <main className="flex-1 p-4 sm:p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <div className="flex flex-col min-h-screen bg-muted/30">
+      {/* Top Header */}
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Logo className="text-xl hidden sm:block" />
+          <h1 className="text-xl sm:text-2xl font-semibold font-headline text-primary">
+            Admin Panel
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+            <Link href="/">
+              <LogOut className="h-4 w-4 mr-2 rotate-180" />
+              Back to Site
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+            <span className="sr-only">Toggle Menu</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* Horizontal Navigation Bar for Desktop */}
+      <nav className="hidden md:flex items-center justify-center gap-4 border-b bg-background px-4 sm:px-6 h-14">
+        {adminNavItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+              pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        {/* Mobile Menu rendered inside main content area for layout flow */}
+        {isMobileMenuOpen && (
+          <nav className="md:hidden flex flex-col gap-2 border bg-card mb-4 p-4 rounded-lg shadow-sm">
+            {adminNavItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors',
+                  (pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href)))
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            ))}
+            <div className="border-t my-2" />
+            <Link
+              href="/"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted"
+            >
+              <LogOut className="h-5 w-5 rotate-180" />
+              Back to Site
+            </Link>
+          </nav>
+        )}
+        {children}
+      </main>
+    </div>
   );
 }
