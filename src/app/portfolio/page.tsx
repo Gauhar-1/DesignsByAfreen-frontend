@@ -15,10 +15,17 @@ export const metadata: Metadata = {
 
 // Fetch categories dynamically from products or define statically
 // For now, static to avoid over-complicating this step
-const categories = ['All', 'Lehenga', 'Patiyala', 'Straight Pant', 'Sarara'];
+// const categories = ['All', 'Lehenga', 'Patiyala', 'Straight Pant', 'Sarara'];
 
 export default async function PortfolioPage({ searchParams }: { searchParams?: { category?: string } }) {
   const allProducts = await axios.get(`${apiUrl}/products`);
+
+  const uniqueCategories: string[] = Array.from(
+  new Set(allProducts.data.map((product: Product) => product.category))
+);
+
+const categories = ['All', ...uniqueCategories];
+
   const selectedCategory = searchParams?.category || 'All';
 
   const itemsToDisplay = selectedCategory === 'All'

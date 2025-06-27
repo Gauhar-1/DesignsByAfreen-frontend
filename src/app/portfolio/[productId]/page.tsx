@@ -108,14 +108,14 @@ export default async function ProductDetailPage({ params }: Props) {
               <h3 className="text-md font-semibold text-primary mb-2">Fabric:</h3>
               <p className="text-foreground/80">Premium Silk Blend (example)</p>
             </div> */}
-            <div>
+            {/* <div>
               <h3 className="text-md font-semibold text-primary mb-2">Available Sizes:</h3>
               <div className="flex gap-2">
                 {['XS', 'S', 'M', 'L', 'XL'].map(size => (
                   <Button key={size} variant="outline" size="sm">{size}</Button>
                 ))}
               </div>
-            </div>
+            </div> */}
              <div>
               <h3 className="text-md font-semibold text-primary mb-2">Stock:</h3>
               <p className="text-foreground/80">{product.stock > 0 ? `${product.stock} units available` : 'Out of Stock'}</p>
