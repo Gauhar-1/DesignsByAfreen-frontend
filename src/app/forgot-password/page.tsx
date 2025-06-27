@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Container from '@/components/layout/Container';
 import { useToast } from '@/hooks/use-toast';
-import { requestPasswordReset } from '@/actions/authActions';
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, MailCheck, KeyRound } from 'lucide-react';
@@ -32,32 +31,32 @@ export default function ForgotPasswordPage() {
   async function onSubmit(data: ForgotPasswordInput) {
     setIsLoading(true);
     setMessageSent(false);
-    try {
-      const result = await requestPasswordReset(data);
-      if (result.success) {
-        toast({
-          title: 'Request Sent',
-          description: result.message,
-        });
-        setMessageSent(true);
-        form.reset();
-        // Optionally redirect or show a message to check email
-      } else {
-        toast({
-          title: 'Request Failed',
-          description: result.message || 'An unexpected error occurred.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: (error as Error).message || 'Failed to send request. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // try {
+    //   const result = await requestPasswordReset(data);
+    //   if (result.success) {
+    //     toast({
+    //       title: 'Request Sent',
+    //       description: result.message,
+    //     });
+    //     setMessageSent(true);
+    //     form.reset();
+    //     // Optionally redirect or show a message to check email
+    //   } else {
+    //     toast({
+    //       title: 'Request Failed',
+    //       description: result.message || 'An unexpected error occurred.',
+    //       variant: 'destructive',
+    //     });
+    //   }
+    // } catch (error) {
+    //   toast({
+    //     title: 'Error',
+    //     description: (error as Error).message || 'Failed to send request. Please try again.',
+    //     variant: 'destructive',
+    //   });
+    // } finally {
+    //   setIsLoading(false);
+    // }
   }
 
   return (

@@ -16,7 +16,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type AdminEditUserInput } from '@/lib/schemas/authSchemas';
 import { useToast } from '@/hooks/use-toast';
-import { adminCreateUser, adminUpdateUser, adminBlockUser, adminUnblockUser } from '@/actions/authActions';
 import { fetchUsers, type User as ApiUserType } from '@/lib/api';
 import axios from 'axios';
 import { apiUrl } from '@/lib/utils';
@@ -77,38 +76,38 @@ export default function AdminUsersPage() {
   }, [selectedUserForEdit, isEditUserDialogOpen, editUserForm]);
 
   async function onAddUserSubmit(data: AdminNewUserInput) {
-    try {
-      const result = await adminCreateUser(data);
-      if (result.success && result.user) {
-        toast({ title: 'User Created', description: result.message });
-        setUsers(prev => [result.user!, ...prev]);
-        addUserForm.reset();
-        setIsAddUserDialogOpen(false);
-      } else {
-        toast({ title: 'Error', description: result.message || 'Failed to create user.', variant: 'destructive' });
-      }
-    } catch (err) {
-      toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
-    }
+    // try {
+    //   const result = await adminCreateUser(data);
+    //   if (result.success && result.user) {
+    //     toast({ title: 'User Created', description: result.message });
+    //     setUsers(prev => [result.user!, ...prev]);
+    //     addUserForm.reset();
+    //     setIsAddUserDialogOpen(false);
+    //   } else {
+    //     toast({ title: 'Error', description: result.message || 'Failed to create user.', variant: 'destructive' });
+    //   }
+    // } catch (err) {
+    //   toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
+    // }
   }
 
   // Edit user submit logic (kept for potential re-activation)
   async function onEditUserSubmit(data: AdminEditUserInput) {
     if (!selectedUserForEdit) return;
-    try {
-      const result = await adminUpdateUser(selectedUserForEdit.id, data);
-      if (result.success && result.user) {
-        toast({ title: 'User Updated', description: result.message });
-        setUsers(prevUsers => prevUsers.map(u => u.id === selectedUserForEdit.id ? result.user! : u));
-        editUserForm.reset();
-        setIsEditUserDialogOpen(false);
-        setSelectedUserForEdit(null);
-      } else {
-        toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
-      }
-    } catch (err) {
-       toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
-    }
+    // try {
+    //   const result = await adminUpdateUser(selectedUserForEdit.id, data);
+    //   if (result.success && result.user) {
+    //     toast({ title: 'User Updated', description: result.message });
+    //     setUsers(prevUsers => prevUsers.map(u => u.id === selectedUserForEdit.id ? result.user! : u));
+    //     editUserForm.reset();
+    //     setIsEditUserDialogOpen(false);
+    //     setSelectedUserForEdit(null);
+    //   } else {
+    //     toast({ title: 'Error', description: result.message || 'Failed to update user.', variant: 'destructive' });
+    //   }
+    // } catch (err) {
+    //    toast({ title: 'Error', description: (err as Error).message || 'An unexpected error occurred.', variant: 'destructive' });
+    // }
   }
   
   const handleToggleBlockUser = async (userId: string, currentBlockedStatus: boolean | undefined) => {
