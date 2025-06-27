@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, Loader2, Ban, CheckCircle2, UsersIcon } from 'lucide-react';
+import { Search, UserPlus, Loader2, Ban, CheckCircle2, UsersIcon ,  Mail, Shield, CalendarDays } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -129,11 +129,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Kept for potential re-activation
-  // const openEditDialog = (user: ApiUserType) => {
-  //   setSelectedUserForEdit(user);
-  //   setIsEditUserDialogOpen(true);
-  // };
+
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
@@ -206,32 +202,103 @@ export default function AdminUsersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading && <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading users...</p></div>}
-          {error && <div className="text-center py-8 text-destructive">{error}</div>}
-          {!isLoading && !error && (
-            <Table>
-              <TableHeader><TableRow><TableHead className="w-12 hidden md:table-cell">Avatar</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Phone</TableHead><TableHead className="hidden sm:table-cell">Role</TableHead><TableHead className="hidden md:table-cell">Status</TableHead><TableHead className="hidden md:table-cell">Joined Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-              <TableBody>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading users...</p></div>
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">{error}</div>
+          ) : filteredUsers.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">Avatar</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Joined Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
+                        <TableCell>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} />
+                            <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.isBlocked ? (<Badge variant="destructive">Blocked</Badge>) : (<Badge variant="default">Active</Badge>)}
+                        </TableCell>
+                        <TableCell>{user.joined}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user.id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}>
+                            {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                            <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {/* Mobile Card View */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
                 {filteredUsers.map((user) => (
-                  <TableRow key={user._id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
-                    <TableCell className="hidden md:table-cell"> <Avatar className="h-8 w-8"> <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} /> <AvatarFallback>{user.name.substring(0,2).toUpperCase()}</AvatarFallback> </Avatar> </TableCell>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{user.phone}</TableCell>
-                    <TableCell className="hidden sm:table-cell"> <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge> </TableCell>
-                    <TableCell className="hidden md:table-cell"> {user.isBlocked ? ( <Badge variant="destructive">Blocked</Badge> ) : ( <Badge variant="default">Active</Badge> )} </TableCell>
-                    <TableCell className="hidden md:table-cell">{user.timestamps}</TableCell>
-                    <TableCell className="text-right">
-                      {/* <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(user)} title="Edit User"> <Pencil className="h-4 w-4" /> <span className="sr-only">Edit User</span> </Button> */}
-                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user._id as string ?? '', user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}> {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />} <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span> </Button>
-                    </TableCell>
-                  </TableRow>
+                  <Card key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
+                    <CardHeader className="flex flex-row items-center justify-between p-4 bg-muted/30">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} />
+                          <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold">{user.name}</h3>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3"/>
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user.id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={`${user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"} h-8 w-8`}>
+                            {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                            <span className="sr-only">{user.isBlocked ? "Unblock User" : "Block User"}</span>
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><Shield className="h-4 w-4"/> Role</span>
+                        <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Status</span>
+                        {user.isBlocked ? <Badge variant="destructive">Blocked</Badge> : <Badge variant="default">Active</Badge>}
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><CalendarDays className="h-4 w-4"/> Joined</span>
+                        <span>{user.joined}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-                {filteredUsers.length === 0 && ( <TableRow> <TableCell colSpan={7} className="text-center text-muted-foreground py-8"> 
-                  <UsersIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground"/>
-                  No users match your current filters.
-                </TableCell> </TableRow> )}
-              </TableBody>
-            </Table>
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <UsersIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+              No users match your current filters.
+            </div>
           )}
         </CardContent>
         {!isLoading && !error && (
