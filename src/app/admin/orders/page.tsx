@@ -24,9 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type OrderShippingUpdateInput, orderShippingUpdateSchema } from '@/lib/schemas/orderSchemas';
-import { adminUpdateShipping } from '@/actions/orderActions';
 import { useToast } from '@/hooks/use-toast';
-import { fetchOrders, type Order as ApiOrderType } from '@/lib/api';
+import {  type Order as ApiOrderType } from '@/lib/api';
 import { apiUrl } from '@/lib/utils';
 import axios from 'axios';
 
@@ -235,61 +234,114 @@ export default function AdminOrdersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading && <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading orders...</p></div>}
-          {error && <div className="text-center py-8 text-destructive">{error}</div>}
-          {!isLoading && !error && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className="hidden sm:table-cell">Date</TableHead>
-                  <TableHead className="hidden md:table-cell">Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Payment</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedOrders.length > 0 ? (
-                  displayedOrders.map((order) => (
-                    <TableRow key={order._id}>
-                      <TableCell className="font-medium">{order._id}</TableCell>
-                      <TableCell>{order.customer}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{order.createdAt}</TableCell>
-                      <TableCell className="hidden md:table-cell">{order.total}</TableCell>
-                      <TableCell> <Badge variant={getStatusBadgeVariant(order.status)}> {order.status} </Badge> </TableCell>
-                      <TableCell className="hidden md:table-cell"> <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}> {order.paymentStatus} </Badge> </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-1">
-                          <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openViewDialog(order)} title="View Order">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View Order</span>
-                          </Button>
-                          <Button variant="ghost" size="icon" className="hover:text-blue-600" onClick={() => openUpdateShippingDialog(order)} title="Update Shipping">
-                            <Truck className="h-4 w-4" />
-                            <span className="sr-only">Update Shipping</span>
-                          </Button>
-                          {order.paymentMethod === 'upi' && order.paymentStatus === 'Pending' && (
-                            <Button variant="outline" size="sm" className="hover:text-primary" onClick={() => openVerifyDialog(order)} title="Verify Payment">
-                              <ShieldCheck className="h-4 w-4 mr-1" />
-                              Verify
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading orders...</p></div>
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">{error}</div>
+          ) : displayedOrders.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Payment</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      <ShoppingBag className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                      No orders match your current filters.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedOrders.map((order) => (
+                      <TableRow key={order._id}>
+                        <TableCell className="font-medium">{order._id}</TableCell>
+                        <TableCell>{order.customer}</TableCell>
+                        <TableCell>{order.createdAt}</TableCell>
+                        <TableCell>{order.total}</TableCell>
+                        <TableCell> <Badge variant={getStatusBadgeVariant(order.status)}> {order.status} </Badge> </TableCell>
+                        <TableCell> <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}> {order.paymentStatus} </Badge> </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end items-center gap-1">
+                            <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openViewDialog(order)} title="View Order">
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View Order</span>
+                            </Button>
+                            <Button variant="ghost" size="icon" className="hover:text-blue-600" onClick={() => openUpdateShippingDialog(order)} title="Update Shipping">
+                              <Truck className="h-4 w-4" />
+                              <span className="sr-only">Update Shipping</span>
+                            </Button>
+                            {order.paymentMethod === 'upi' && order.paymentStatus === 'Pending' && (
+                              <Button variant="outline" size="sm" className="hover:text-primary" onClick={() => openVerifyDialog(order)} title="Verify Payment">
+                                <ShieldCheck className="h-4 w-4 mr-1" />
+                                Verify
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {displayedOrders.map((order) => (
+                  <Card key={order._id} className="overflow-hidden">
+                      <CardHeader className="flex flex-row items-center justify-between p-4 bg-muted/30">
+                          <div>
+                              <h3 className="font-semibold">{order._id}</h3>
+                              <p className="text-sm text-muted-foreground">{order.customer}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="icon" className="hover:text-primary h-8 w-8" onClick={() => openViewDialog(order)} title="View Order">
+                                  <Eye className="h-4 w-4" />
+                                  <span className="sr-only">View Order</span>
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hover:text-blue-600 h-8 w-8" onClick={() => openUpdateShippingDialog(order)} title="Update Shipping">
+                                  <Truck className="h-4 w-4" />
+                                  <span className="sr-only">Update Shipping</span>
+                              </Button>
+                          </div>
+                      </CardHeader>
+                      <CardContent className="p-4 space-y-3">
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Date</span>
+                              <span>{order.createdAt}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Total</span>
+                              <span className="font-medium">{order.total}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Order Status</span>
+                              <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                          </div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Payment Status</span>
+                              <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}>{order.paymentStatus}</Badge>
+                          </div>
+                      </CardContent>
+                      {order.paymentMethod === 'upi' && order.paymentStatus === 'Pending' && (
+                          <CardFooter className="p-4 pt-0">
+                              <Button variant="outline" size="sm" className="w-full" onClick={() => openVerifyDialog(order)} title="Verify Payment">
+                                  <ShieldCheck className="h-4 w-4 mr-1" />
+                                  Verify Payment
+                              </Button>
+                          </CardFooter>
+                      )}
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <ShoppingBag className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+              No orders match your current filters.
+            </div>
           )}
         </CardContent>
         {!isLoading && !error && (
@@ -381,22 +433,19 @@ export default function AdminOrdersPage() {
             <DialogTitle>Update Shipping Status</DialogTitle>
             <DialogDescription> Update the shipping status for order {selectedOrderForShipping?._id}. </DialogDescription>
           </DialogHeader>
-          <Form {...shippingForm}>
             <form onSubmit={shippingForm.handleSubmit(onShippingUpdateSubmit)} className="space-y-4 py-4">
-              <FormField control={shippingForm.control} name="status" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Order Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select new status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {orderStatusOptions.map(status => (<SelectItem key={status} value={status}>{status}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <FormItem>
+                <FormLabel>Order Status</FormLabel>
+                <Select onValueChange={shippingForm.setValue.bind(shippingForm, 'status')} defaultValue={shippingForm.getValues('status')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select new status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orderStatusOptions.map(status => (<SelectItem key={status} value={status}>{status}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <FormMessage>{shippingForm.formState.errors.status?.message}</FormMessage>
+              </FormItem>
               <DialogFooter className="pt-4">
                 <DialogClose asChild>
                   <Button type="button" variant="outline" onClick={() => { shippingForm.reset(); setSelectedOrderForShipping(null); }}>Cancel</Button>
@@ -406,7 +455,6 @@ export default function AdminOrdersPage() {
                 </Button>
               </DialogFooter>
             </form>
-          </Form>
         </DialogContent>
       </Dialog>
       
