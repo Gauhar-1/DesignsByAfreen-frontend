@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button, buttonVariants } from '@/components/ui/button'; // Imported buttonVariants
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,8 +35,7 @@ import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { adminNewProductSchema, type AdminNewProductInput } from '@/lib/schemas/productSchemas';
 import { useToast } from '@/hooks/use-toast';
-import { adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '@/actions/productActions';
-import { fetchProducts, type Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
+import {  type Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
 import { apiUrl, cn } from '@/lib/utils';
 import axios from 'axios';
 
@@ -210,21 +210,21 @@ export default function AdminProductsPage() {
       <FormField control={formInstance.control} name="stock" render={({ field }) => ( 
         <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input type="number" placeholder="e.g., 50" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /> <FormMessage /> </FormItem> 
       )}/>
-      <FormField
+       <FormField
         control={formInstance.control}
         name="imageUrl"
-        render={({ field: { ref, name, onBlur } }) => ( 
+        render={({ field }) => (
           <FormItem>
-            <FormLabel htmlFor={name} className="flex items-center">
+            <FormLabel htmlFor={field.name} className="flex items-center">
               <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" /> Product Image (max 2MB)
             </FormLabel>
             <Input
-              id={name}
+              id={field.name}
               type="file"
               accept="image/*"
-              ref={ref} 
-              name={name} 
-              onBlur={onBlur} 
+              ref={field.ref}
+              name={field.name}
+              onBlur={field.onBlur}
               onChange={onImageChangeHandler}
               className="text-base py-2 file:mr-4 file:py-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
             />
@@ -295,34 +295,108 @@ export default function AdminProductsPage() {
         <CardContent>
           {isLoading && <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading products...</p></div>}
           {error && <div className="text-center py-8 text-destructive">{error}</div>}
-          {!isLoading && !error && (
-            <Table>
-              <TableHeader><TableRow><TableHead className="w-16 hidden md:table-cell">Image</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Category</TableHead><TableHead className="hidden sm:table-cell">Price</TableHead><TableHead className="hidden sm:table-cell text-center">Stock</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="hidden md:table-cell"> {product.imageUrl ? ( <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} /> ) : ( <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div> )} </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{product.category}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{product.price}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-center">{product.stock}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(product)}> <Edit2 className="h-4 w-4" /> <span className="sr-only">Edit</span> </Button>
-                        <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => openDeleteDialog(product)}> <Trash2 className="h-4 w-4" /> <span className="sr-only">Delete</span> </Button>
-                      </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading products...</p></div>
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">{error}</div>
+          ) : filteredProducts.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Image</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead className="text-center">Stock</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : ( <TableRow> <TableCell colSpan={6} className="text-center text-muted-foreground py-8"> 
-                  {searchTerm ? <><PackageSearch className="h-10 w-10 mx-auto mb-2 text-muted-foreground"/>No products match your search term.</> : "No products available."}
-                </TableCell> </TableRow> )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          {product.imageUrl ? (
+                            <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.category}</TableCell>
+                        <TableCell>{product.price}</TableCell>
+                        <TableCell className="text-center">{product.stock}</TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={product.description}>{product.description}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" className="hover:text-primary" onClick={() => openEditDialog(product)}>
+                            <Edit2 className="h-4 w-4" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => openDeleteDialog(product)}>
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {filteredProducts.map((product) => (
+                   <Card key={product.id} className="overflow-hidden">
+                      <div className="flex">
+                          <div className="relative w-24 flex-shrink-0">
+                              <Image 
+                                  src={product.imageUrl || 'https://placehold.co/120x150.png'}
+                                  alt={product.name}
+                                  fill
+                                  sizes="96px"
+                                  className="object-cover"
+                                  data-ai-hint={product.dataAiHint || 'product image'}
+                              />
+                          </div>
+                          <div className="p-4 flex flex-col justify-between flex-grow">
+                              <div>
+                                  <Badge variant="outline" className="mb-1 text-xs">{product.category}</Badge>
+                                  <h3 className="font-semibold leading-tight">{product.name}</h3>
+                                  <p className="text-primary font-medium mt-1">{product.price}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">Stock: {product.stock}</p>
+                                  {product.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-2" title={product.description}>{product.description}</p>}
+                              </div>
+                              <div className="flex items-center justify-end gap-1 mt-2">
+                                  <Button variant="ghost" size="icon" className="hover:text-primary h-8 w-8" onClick={() => openEditDialog(product)}>
+                                      <Edit2 className="h-4 w-4" />
+                                      <span className="sr-only">Edit</span>
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="hover:text-destructive h-8 w-8" onClick={() => openDeleteDialog(product)}>
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Delete</span>
+                                  </Button>
+                              </div>
+                          </div>
+                      </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <PackageSearch className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+              {searchTerm ? "No products match your search term." : "No products available."}
+            </div>
           )}
         </CardContent>
-        {!isLoading && !error && (
-          <CardFooter> <div className="text-xs text-muted-foreground"> {filteredProducts.length > 0 ? <>Showing <strong>{Math.min(1, filteredProducts.length)}-{filteredProducts.length}</strong> of {products.length} total products</> : <>No products matching search. (<strong>{products.length}</strong> total products)</> } </div> </CardFooter>
-        )}
+        <CardFooter>
+            <div className="text-xs text-muted-foreground">
+              {filteredProducts.length > 0 ? <>Showing <strong>{Math.min(1, filteredProducts.length)}-{filteredProducts.length}</strong> of {products.length} total products</> : <>No products matching search. (<strong>{products.length}</strong> total products)</>}
+            </div>
+        </CardFooter>
       </Card>
     </div>
   );
