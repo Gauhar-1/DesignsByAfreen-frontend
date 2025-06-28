@@ -1,7 +1,7 @@
 
 import ProductCard from '@/components/shared/ProductCard';
 import Container from '@/components/layout/Container';
-import { fetchProducts, type Product } from '@/lib/api';
+import {  type Product } from '@/lib/api';
 import axios from 'axios';
 
 export default async function FeaturedCollections() {

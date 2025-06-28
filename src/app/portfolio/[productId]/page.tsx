@@ -1,7 +1,9 @@
+'use-client'
+
 export const dynamic = "force-dynamic";
 
 
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import Image from 'next/image';
 import Container from '@/components/layout/Container';
@@ -11,6 +13,8 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { apiUrl } from '@/lib/utils';
 import axios from 'axios';
+import { getUserIdFromToken } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 type Props = {
   params: { productId: string };
@@ -50,9 +54,48 @@ export async function generateMetadata(
 
 export default async function ProductDetailPage({ params }: Props) {
   const productId = params.productId  ;
+  const [userId, setUserId] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const result = await axios.get(`${apiUrl}/products/byId`,{
      params: { id: productId}
   });
+
+  useEffect(() => {
+      const id = getUserIdFromToken();
+      if (id) { 
+        setUserId(id)
+      }
+      else{
+        console.log('User ID not found in token');
+      }
+    }, []);
+
+  const handleAddToCart = async () => {
+      try {
+        await axios.post(`${apiUrl}/cart`, {
+          productId: product._id,
+          quantity: 1,
+          userId,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          category: product.category,
+        });
+        toast({
+          title: 'Added to Cart',
+          description: `${product.name} has been added to your cart.`,
+        });
+        // In a real app, you might update a global cart state or trigger a refetch
+        console.log('Added to cart (simulated):', product);
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: `Could not add ${product.name} to cart.`,
+          variant: 'destructive',
+        });
+      }
+    };
 
   if (!result.data) {
     return (
@@ -123,7 +166,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="w-full sm:w-auto" disabled={product.stock === 0}>
+            <Button size="lg" className="w-full sm:w-auto" disabled={product.stock === 0} aria-label="Add to Cart" onClick={handleAddToCart} >
               <ShoppingCart className="h-5 w-5 mr-2" />
               {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
