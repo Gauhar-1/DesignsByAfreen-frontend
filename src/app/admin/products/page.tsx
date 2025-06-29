@@ -72,7 +72,7 @@ export default function AdminProductsPage() {
   const addForm = useForm<AdminNewProductInput>({
     resolver: zodResolver(adminNewProductSchema),
     defaultValues: {
-      name: '', category: '', price: '', stock: 0, imageUrl: undefined, description: '', dataAiHint: '',
+      name: '', category: '', price: '', stock: '', imageUrl: undefined, description: '', dataAiHint: '',
     },
   });
 
@@ -208,7 +208,7 @@ export default function AdminProductsPage() {
         <FormItem> <FormLabel>Price</FormLabel> <Input placeholder="e.g., $99.99 or 99.99" {...field} /> <FormMessage /> </FormItem> 
       )}/>
       <FormField control={formInstance.control} name="stock" render={({ field }) => ( 
-        <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input type="number" placeholder="e.g., 50" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /> <FormMessage /> </FormItem> 
+        <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input type="number" placeholder="e.g., 50" {...field} onChange={(e) => field.onChange(e.target.value)} /> <FormMessage /> </FormItem> 
       )}/>
        <FormField
         control={formInstance.control}

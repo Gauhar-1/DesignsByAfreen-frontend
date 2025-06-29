@@ -10,7 +10,7 @@ export interface Product {
   name: string;
   category: string;
   price: string; // Keep as string for display consistency, convert to number for calculations if needed
-  stock: number;
+  stock: string;
   imageUrl?: string;
   dataAiHint?: string;
   description?: string;
