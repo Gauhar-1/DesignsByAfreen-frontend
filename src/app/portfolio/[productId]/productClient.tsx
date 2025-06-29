@@ -37,11 +37,21 @@ export default function ProductDetailClient({ product }: { product: any }) {
         description: `${product.name} has been added to your cart.`,
       });
     } catch (error : any) {
+       const message = error.response?.data?.message;
+
+    if (error.response?.status === 400 && message === 'Item already exists in cart') {
       toast({
-        title: 'Error',
-        description: error.response?.data?.message || `Could not add ${product.name} to cart.`,
+        title: 'Already in Cart',
+        description: `${product.name} is already in your cart.`,
         variant: 'destructive',
       });
+    } else {
+      toast({
+        title: 'Error',
+        description: message || `Could not add ${product.name} to cart.`,
+        variant: 'destructive',
+      });
+    }
     }
   };
 
