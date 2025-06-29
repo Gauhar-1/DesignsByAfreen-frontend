@@ -23,7 +23,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   const handleAddToCart = async () => {
     try {
-      await axios.post(`${apiUrl}/cart`, {
+     const response = await axios.post(`${apiUrl}/cart`, {
         productId: product._id,
         quantity: 1,
         userId,
@@ -32,26 +32,17 @@ export default function ProductDetailClient({ product }: { product: any }) {
         imageUrl: product.imageUrl,
         category: product.category,
       });
+
       toast({
         title: 'Added to Cart',
-        description: `${product.name} has been added to your cart.`,
+        description: response.data.message ||`${product.name} has been added to your cart.`,
       });
     } catch (error : any) {
-       const message = error.response?.data?.message;
-
-    if (error.response?.status === 400 && message === 'Item already exists in cart') {
-      toast({
-        title: 'Already in Cart',
-        description: `${product.name} is already in your cart.`,
-        variant: 'destructive',
-      });
-    } else {
       toast({
         title: 'Error',
-        description: message || `Could not add ${product.name} to cart.`,
+        description: error.response?.data?.message || `Could not add ${product.name} to cart.`,
         variant: 'destructive',
       });
-    }
     }
   };
 
