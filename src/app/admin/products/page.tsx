@@ -39,6 +39,56 @@ import {  type Product as ApiProductType } from '@/lib/api'; // Use Product from
 import { apiUrl, cn } from '@/lib/utils';
 import axios from 'axios';
 
+ const ProductFormFields = ({
+    formInstance, currentImagePreview, onImageChangeHandler
+  }: {
+    formInstance: UseFormReturn<AdminNewProductInput>; currentImagePreview: string | null; onImageChangeHandler: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <>
+      <FormField control={formInstance.control} name="name" render={({ field }) => ( 
+        <FormItem> <FormLabel>Product Name</FormLabel> <Input placeholder="e.g., Silk Scarf" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="category" render={({ field }) => ( 
+        <FormItem> <FormLabel>Category</FormLabel> <Input placeholder="e.g., Accessories" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="price" render={({ field }) => ( 
+        <FormItem> <FormLabel>Price</FormLabel> <Input placeholder="e.g., $99.99 or 99.99" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="stock" render={({ field }) => ( 
+        <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input  placeholder="e.g., 50" {...field} onChange={(e) => field.onChange(e.target.value)} /> <FormMessage /> </FormItem> 
+      )}/>
+       <FormField
+        control={formInstance.control}
+        name="imageUrl"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel htmlFor={field.name} className="flex items-center">
+              <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" /> Product Image (max 2MB)
+            </FormLabel>
+            <Input
+              id={field.name}
+              type="file"
+              accept="image/*"
+              ref={field.ref}
+              name={field.name}
+              onBlur={field.onBlur}
+              onChange={onImageChangeHandler}
+              className="text-base py-2 file:mr-4 file:py-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {currentImagePreview && ( <div className="mt-2"> <FormLabel>Image Preview</FormLabel> <div className="relative w-32 h-32 mt-1 border rounded-md overflow-hidden"> <Image src={currentImagePreview} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="128px" /> </div> </div> )}
+      <FormField control={formInstance.control} name="description" render={({ field }) => ( 
+        <FormItem> <FormLabel>Description (Optional)</FormLabel> <Textarea placeholder="Describe the product..." {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+      <FormField control={formInstance.control} name="dataAiHint" render={({ field }) => ( 
+        <FormItem> <FormLabel>AI Image Hint (Optional)</FormLabel> <Input placeholder="e.g., silk scarf floral" {...field} /> <FormMessage /> </FormItem> 
+      )}/>
+    </>
+  );
+
 export default function AdminProductsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -192,55 +242,7 @@ export default function AdminProductsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const ProductFormFields = ({
-    formInstance, currentImagePreview, onImageChangeHandler
-  }: {
-    formInstance: UseFormReturn<AdminNewProductInput>; currentImagePreview: string | null; onImageChangeHandler: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <>
-      <FormField control={formInstance.control} name="name" render={({ field }) => ( 
-        <FormItem> <FormLabel>Product Name</FormLabel> <Input placeholder="e.g., Silk Scarf" {...field} /> <FormMessage /> </FormItem> 
-      )}/>
-      <FormField control={formInstance.control} name="category" render={({ field }) => ( 
-        <FormItem> <FormLabel>Category</FormLabel> <Input placeholder="e.g., Accessories" {...field} /> <FormMessage /> </FormItem> 
-      )}/>
-      <FormField control={formInstance.control} name="price" render={({ field }) => ( 
-        <FormItem> <FormLabel>Price</FormLabel> <Input placeholder="e.g., $99.99 or 99.99" {...field} /> <FormMessage /> </FormItem> 
-      )}/>
-      <FormField control={formInstance.control} name="stock" render={({ field }) => ( 
-        <FormItem> <FormLabel>Stock Quantity</FormLabel> <Input type="number" placeholder="e.g., 50" {...field} onChange={(e) => field.onChange(e.target.value)} /> <FormMessage /> </FormItem> 
-      )}/>
-       <FormField
-        control={formInstance.control}
-        name="imageUrl"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel htmlFor={field.name} className="flex items-center">
-              <UploadCloud className="h-4 w-4 mr-2 text-muted-foreground" /> Product Image (max 2MB)
-            </FormLabel>
-            <Input
-              id={field.name}
-              type="file"
-              accept="image/*"
-              ref={field.ref}
-              name={field.name}
-              onBlur={field.onBlur}
-              onChange={onImageChangeHandler}
-              className="text-base py-2 file:mr-4 file:py-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      {currentImagePreview && ( <div className="mt-2"> <FormLabel>Image Preview</FormLabel> <div className="relative w-32 h-32 mt-1 border rounded-md overflow-hidden"> <Image src={currentImagePreview} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="128px" /> </div> </div> )}
-      <FormField control={formInstance.control} name="description" render={({ field }) => ( 
-        <FormItem> <FormLabel>Description (Optional)</FormLabel> <Textarea placeholder="Describe the product..." {...field} /> <FormMessage /> </FormItem> 
-      )}/>
-      <FormField control={formInstance.control} name="dataAiHint" render={({ field }) => ( 
-        <FormItem> <FormLabel>AI Image Hint (Optional)</FormLabel> <Input placeholder="e.g., silk scarf floral" {...field} /> <FormMessage /> </FormItem> 
-      )}/>
-    </>
-  );
+ 
 
   return (
     <div className="space-y-6">
