@@ -36,10 +36,10 @@ export default function ProductDetailClient({ product }: { product: any }) {
         title: 'Added to Cart',
         description: `${product.name} has been added to your cart.`,
       });
-    } catch (error) {
+    } catch (error : any) {
       toast({
         title: 'Error',
-        description: `Could not add ${product.name} to cart.`,
+        description: error.response?.data?.message || `Could not add ${product.name} to cart.`,
         variant: 'destructive',
       });
     }
