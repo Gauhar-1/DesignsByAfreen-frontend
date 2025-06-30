@@ -13,9 +13,6 @@ export const metadata: Metadata = {
   description: 'Explore the exquisite collections and designs by Designs by Afreen. Filter by category to find your perfect piece.',
 };
 
-// Fetch categories dynamically from products or define statically
-// For now, static to avoid over-complicating this step
-// const categories = ['All', 'Lehenga', 'Patiyala', 'Straight Pant', 'Sarara'];
 
 export default async function PortfolioPage({ searchParams }: { searchParams?: { category?: string } }) {
   const allProducts = await axios.get(`${apiUrl}/products`);

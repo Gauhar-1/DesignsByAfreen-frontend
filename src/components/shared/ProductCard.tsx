@@ -43,7 +43,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
 
   const handleAddToCart = async () => {
     try {
-      await axios.post(`${apiUrl}/cart`, {
+     const response = await axios.post(`${apiUrl}/cart`, {
         productId: product._id,
         quantity: 1,
         userId,
@@ -54,10 +54,8 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       });
       toast({
         title: 'Added to Cart',
-        description: `${product.name} has been added to your cart.`,
+        description: response.data.message ||`${product.name} has been added to your cart.`,
       });
-      // In a real app, you might update a global cart state or trigger a refetch
-      console.log('Added to cart (simulated):', product);
     } catch (error) {
       toast({
         title: 'Error',
@@ -95,9 +93,9 @@ export default function ProductCard({ product, className }: ProductCardProps) {
           <Heart className="h-4 w-4 mr-1 sm:mr-2" fill={isWishlisted ? 'hsl(var(--primary))' : 'none'} />
           Wishlist
         </Button>
-        <Button size="sm" aria-label="Add to Cart" onClick={handleAddToCart} disabled={product.stock === 0} className="flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none">
+        <Button size="sm" aria-label="Add to Cart" onClick={handleAddToCart} disabled={product.stock === '0'} className="flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none">
           <ShoppingCart className="h-4 w-4 mr-1 sm:mr-2" />
-          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+          {product.stock === '0' ? 'Out of Stock' : 'Add to Cart'}
         </Button>
       </CardFooter>
     </Card>
