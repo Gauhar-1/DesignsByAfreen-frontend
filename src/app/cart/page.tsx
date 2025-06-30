@@ -67,7 +67,6 @@ export default function CartPage() {
           quantity: qty,
            userId: uid,
         });
-        toast({ title: qty < 1 ? 'Item Removed' : 'Quantity Updated' });
       } catch (err) {
         toast({ title: 'Error', description: 'Failed to update quantity.', variant: 'destructive' });
       }
@@ -93,6 +92,11 @@ const handleUpdateQuantity = (productId: string, newQuantity: number) => {
       toast({
         title: 'Item Removed',
         description: `${originalItem.name} removed from cart.`,
+      });
+    }
+    else if (originalItem && newQuantity !== originalItem.quantity) {
+      toast({
+        title: 'Quantity Updated',
       });
     }
     return updatedItems;
