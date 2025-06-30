@@ -465,7 +465,7 @@ export default function AdminOrdersPage() {
       </Dialog>
       
       <Dialog open={isVerifyDialogOpen} onOpenChange={(isOpen) => { if(!isOpen) setSelectedOrderForVerification(null); setIsVerifyDialogOpen(isOpen); }}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl mt-12 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">Verify UPI Payment</DialogTitle>
             <DialogDescription>
@@ -474,24 +474,24 @@ export default function AdminOrdersPage() {
           </DialogHeader>
           {selectedOrderForVerification && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Details</h3>
+              <div className = "space-y-4">
+                <h3 className="font-semibold text-lg ">Details</h3>
                 <div className="space-y-2 text-sm">
                   <p><strong>UTR/Ref No:</strong></p>
                   <p className="font-mono bg-muted p-2 rounded-md break-all">{selectedOrderForVerification.upiReferenceNumber || 'Not Provided'}</p>
                   <p><strong>Amount:</strong> {selectedOrderForVerification.total}</p>
                 </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Payment Screenshot</h3>
+              <div className='space-y-4'>
+                <h3 className="font-semibold text-lg ">Payment Screenshot</h3>
                 {selectedOrderForVerification.paymentScreenshotUri ? (
                   <a href={selectedOrderForVerification.paymentScreenshotUri} target="_blank" rel="noopener noreferrer">
                     <Image
                       src={selectedOrderForVerification.paymentScreenshotUri}
                       alt="Payment Screenshot"
-                      width={200}
-                      height={300}
-                      className="rounded-md border object-contain"
+                      width={400}
+                      height={600}
+                      className="rounded-md border object-contain w-full h-auto max-h-96"
                       data-ai-hint="payment screenshot"
                     />
                   </a>
@@ -503,7 +503,7 @@ export default function AdminOrdersPage() {
               </div>
             </div>
           )}
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
             <Button variant="outline" onClick={() => setIsVerifyDialogOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={() => handlePaymentVerification(false)} disabled={isVerifying}>
               {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
