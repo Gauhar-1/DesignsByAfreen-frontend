@@ -245,7 +245,7 @@ export default function AdminOrdersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Order ID</TableHead>
+                      <TableHead>Phone No.</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Total</TableHead>
@@ -257,7 +257,7 @@ export default function AdminOrdersPage() {
                   <TableBody>
                     {displayedOrders.map((order) => (
                       <TableRow key={order._id}>
-                        <TableCell className="font-medium">{order._id}</TableCell>
+                        <TableCell className="font-medium">{order.phone}</TableCell>
                         <TableCell>{order.customer}</TableCell>
                         <TableCell>{order.createdAt}</TableCell>
                         <TableCell>{order.total}</TableCell>
@@ -293,7 +293,7 @@ export default function AdminOrdersPage() {
                   <Card key={order._id} className="overflow-hidden">
                       <CardHeader className="flex flex-row items-center justify-between p-4 bg-muted/30">
                           <div>
-                              <h3 className="font-semibold">{order._id}</h3>
+                              <h3 className="font-semibold">{order.phone}</h3>
                               <p className="text-sm text-muted-foreground">{order.customer}</p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -489,8 +489,8 @@ export default function AdminOrdersPage() {
                     <Image
                       src={selectedOrderForVerification.paymentScreenshotUri}
                       alt="Payment Screenshot"
-                      width={400}
-                      height={600}
+                      width={200}
+                      height={300}
                       className="rounded-md border object-contain"
                       data-ai-hint="payment screenshot"
                     />
