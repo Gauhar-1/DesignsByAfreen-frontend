@@ -151,12 +151,14 @@ export default function AdminProductsPage() {
       product.category.toLowerCase().includes(searchTerm.toLowerCase())
     ), [products, searchTerm]);
 
-  const handleImageChange = (
+  const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     formInstance: UseFormReturn<AdminNewProductInput>
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file) {
+      return;
+    }
       if (file.size > 2 * 1024 * 1024) { 
         toast({ title: 'File too large', description: 'Please upload an image smaller than 2MB.', variant: 'destructive' });
         formInstance.setValue('imageUrl', selectedProduct?.imageUrl || undefined);
@@ -164,18 +166,30 @@ export default function AdminProductsPage() {
         if (event.target) event.target.value = ''; 
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUri = reader.result as string;
-        formInstance.setValue('imageUrl', dataUri);
-        setImagePreview(dataUri);
-      };
-      reader.readAsDataURL(file);
+      try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'designsByAfreen'); // <-- your upload preset
+
+    const res = await axios.post('https://api.cloudinary.com/v1_1/dccklqtaw/image/upload', formData,{
+     headers :{ 'Content-Type': 'multipart/form-data',}
+    });
+
+    const data =  res.data;
+
+    if (data.secure_url) {
+      formInstance.setValue('imageUrl', data.secure_url);
+      setImagePreview(data.secure_url);
     } else {
-      const originalImageUrl = formInstance === editForm ? selectedProduct?.imageUrl : undefined;
-      formInstance.setValue('imageUrl', originalImageUrl);
-      setImagePreview(originalImageUrl || null);
+      throw new Error('Image upload failed');
     }
+  } catch (err) {
+    console.error(err);
+    toast({ title: 'Upload failed', description: 'Something went wrong during image upload.', variant: 'destructive' });
+    formInstance.setValue('imageUrl', selectedProduct?.imageUrl || undefined);
+    setImagePreview(selectedProduct?.imageUrl || null);
+  }
+  
   };
 
   async function onAddSubmit(data: AdminNewProductInput) {
