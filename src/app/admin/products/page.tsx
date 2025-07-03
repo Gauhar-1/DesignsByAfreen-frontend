@@ -332,7 +332,7 @@ export default function AdminProductsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredProducts.map((product) => (
-                      <TableRow key={product.id}>
+                      <TableRow key={product._id}>
                         <TableCell>
                           {product.imageUrl ? (
                             <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded object-cover aspect-square" data-ai-hint={product.dataAiHint || 'product image'} />
