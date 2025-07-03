@@ -171,14 +171,13 @@ export default function AdminProductsPage() {
     formData.append('file', file);
     formData.append('upload_preset', 'designsByAfreen'); // <-- your upload preset
 
-    const res = await axios.post('https://api.cloudinary.com/v1_1/dccklqtaw/image/upload', formData,{
-     headers :{ 'Content-Type': 'multipart/form-data',}
-    });
+    const res = await axios.post('https://api.cloudinary.com/v1_1/dccklqtaw/image/upload', formData);
 
     const data =  res.data;
 
     if (data.secure_url) {
       formInstance.setValue('imageUrl', data.secure_url);
+      console.log('Image uploaded successfully:', data.secure_url);
       setImagePreview(data.secure_url);
     } else {
       throw new Error('Image upload failed');
@@ -234,7 +233,7 @@ export default function AdminProductsPage() {
       const result = await axios.delete(`${apiUrl}/products`, { params: {id : selectedProduct._id} });
       if (result.data.success) {
         toast({ title: 'Product Deleted', description: result.data.message });
-        setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
+        setProducts(prev => prev.filter(p => p._id !== selectedProduct._id));
         setIsDeleteDialogOpen(false);
         setSelectedProduct(null);
       } else {
