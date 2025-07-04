@@ -12,7 +12,7 @@ import Container from '@/components/layout/Container';
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/portfolio', label: 'Portfolio' },
-  { href: '/trending-styles', label: 'Trending Styles' },
+  { href: '/order-history', label: 'Order History' },
   { href: '/contact', label: 'Contact Us' },
 ];
 
