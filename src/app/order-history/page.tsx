@@ -14,6 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2, Package, Eye, ClipboardList, MapPin, CalendarDays, CreditCard } from 'lucide-react';
 import { fetchOrders, type Order as ApiOrderType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getUserIdFromToken } from '@/lib/auth';
+import axios from 'axios';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<ApiOrderType[]>([]);
@@ -26,10 +28,16 @@ export default function OrderHistoryPage() {
   useEffect(() => {
     async function loadOrders() {
       try {
+        const userId = getUserIdFromToken();
+        if(!userId) {
+            return console.log('No user ID found in token.'); // Handle case where user ID is not available
+        }
         setIsLoading(true);
         setError(null);
-        const fetchedOrders = await fetchOrders();
-        setOrders(fetchedOrders);
+        const fetchedOrders = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/order-history`, {
+          params: { userId },
+        });
+        setOrders(fetchedOrders.data);
       } catch (err) {
         setError('Failed to fetch your order history.');
         toast({ title: 'Error', description: 'Could not fetch order history.', variant: 'destructive' });
