@@ -37,7 +37,7 @@ export default function OrderHistoryPage() {
         const fetchedOrders = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/order/order-history`, {
           params: { userId },
         });
-        setOrders(fetchedOrders.data);
+        setOrders(fetchedOrders.data.data);
       } catch (err) {
         setError('Failed to fetch your order history.');
         toast({ title: 'Error', description: 'Could not fetch order history.', variant: 'destructive' });
