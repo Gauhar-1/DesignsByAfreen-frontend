@@ -34,7 +34,7 @@ export default function OrderHistoryPage() {
         }
         setIsLoading(true);
         setError(null);
-        const fetchedOrders = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/order-history`, {
+        const fetchedOrders = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/order/order-history`, {
           params: { userId },
         });
         setOrders(fetchedOrders.data);
