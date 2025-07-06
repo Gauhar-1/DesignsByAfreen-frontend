@@ -6,26 +6,11 @@ import Logo from '@/components/icons/Logo';
 import Container from '@/components/layout/Container';
 import { useEffect, useState } from 'react';
 import { getUserRoleFromToken } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
-  const [ role, setRole ] = useState<string | null>(null);
-
-  useEffect(()=>{
-    const checkRole = ()=>{
-      const decodedRole = getUserRoleFromToken();
-
-      if(!decodedRole){
-        console.log('No role found in token');
-        return;
-      }
-      console.log('Role found in token');
-
-      setRole(decodedRole);
-    }
-
-    checkRole();
-  },[ getUserRoleFromToken ]);
+  const { role } = useAuth();
 
   return (
     <footer className="bg-muted/50 border-t border-border/40">

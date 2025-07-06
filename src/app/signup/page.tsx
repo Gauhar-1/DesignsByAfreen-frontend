@@ -16,16 +16,14 @@ import { Loader2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { apiUrl } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
-// export const metadata: Metadata = { // Cannot be used in client component
-//   title: 'Sign Up - Atelier Luxe',
-//   description: 'Create your Atelier Luxe account to save your preferences and designs.',
-// };
 
 export default function SignupPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -46,8 +44,8 @@ export default function SignupPage() {
           title: 'Account Created!',
           description: result.data.message,
         });
-        // TODO: Handle successful signup (e.g., redirect to login or auto-login)
-        localStorage.setItem('token', result.data.token);
+        
+        login(result.data.token); // Store token in context
         form.reset();
         router.push('/'); // Navigate to home page
       } else {

@@ -10,25 +10,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Container from '@/components/layout/Container';
 import { useToast } from '@/hooks/use-toast';
-import { loginUser } from '@/actions/authActions';
 import { loginSchema, type LoginInput } from '@/lib/schemas/authSchemas';
 import { useState } from 'react';
 import { Loader2, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from "axios";
 import { apiUrl } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
-// export const metadata: Metadata = { // Cannot be used in client component
-//   title: 'Login - Atelier Luxe',
-//   description: 'Access your Atelier Luxe account.',
-// };
 
-// export const apiUrl = "http://localhost:5000/api";
 
 export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -51,8 +47,8 @@ export default function LoginPage() {
         if(!result.data.token){
             console.log("Token not found", result.data.token)
           }
-          console.log("Token found", result.data.token)
-        localStorage.setItem('token', result.data.token);
+
+        login(result.data.token);// Store token in context
         form.reset();
         router.push('/'); // Navigate to home page
       } else {

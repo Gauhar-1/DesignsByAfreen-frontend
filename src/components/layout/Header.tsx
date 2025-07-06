@@ -1,13 +1,13 @@
 
 'use client';
+
 import Link from 'next/link';
 import { ShoppingCart, Menu, X, User, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/icons/Logo';
-import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
-// import { useAuth } from '@/context/AuthContext'; // Placeholder for auth state
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -19,21 +19,11 @@ const navItems = [
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [ user, setUser ] = useState< Boolean | null>(null); 
+  const { logout, isLoggedIn } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  useEffect(() =>{
-     const token = localStorage.getItem('token');
-     if(token){
-      setUser(true);
-     }
-     else{
-      setUser(false);
-     }
-  }, [])
 
 
   const toggleMobileMenu = () => {
@@ -88,7 +78,7 @@ export default function Header() {
                 <ShoppingCart className="h-5 w-5 text-primary" />
               </Button>
             </Link>
-            {user ? (
+            { isLoggedIn ? (
               <>
                 {/* <Link href="/profile" passHref>
                   <Button variant="ghost" size="sm">
@@ -101,10 +91,7 @@ export default function Header() {
                  <Button
   variant="outline"
   size="sm"
-  onClick={() => {
-    localStorage.removeItem('token');
-    setUser(null);
-  }}
+  onClick={logout}
 >
   Logout
 </Button>
@@ -149,7 +136,7 @@ export default function Header() {
                 </Link>
               ))}
               <hr className="my-2 border-border" />
-              {user ? (
+              { isLoggedIn ? (
                 <>
                   {/* <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-foreground hover:text-primary transition-colors py-2">Profile</Link>
                   <Button variant="outline" className="w-full" onClick={async () => { await logoutUserAction(); setIsMobileMenuOpen(false); }}>Logout</Button> */}
@@ -157,10 +144,7 @@ export default function Header() {
                    <Button
   variant="outline"
   size="sm"
-  onClick={() => {
-    localStorage.removeItem('token');
-    setUser(null);
-  }}
+  onClick={logout}
 >
   Logout
 </Button>
