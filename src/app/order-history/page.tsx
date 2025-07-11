@@ -16,6 +16,8 @@ import { fetchOrders, type Order as ApiOrderType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getUserIdFromToken } from '@/lib/auth';
 import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
+import { formatDate } from '@/lib/utils';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<ApiOrderType[]>([]);
@@ -24,11 +26,11 @@ export default function OrderHistoryPage() {
   const [selectedOrder, setSelectedOrder] = useState<ApiOrderType | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { userId } = useAuth();
 
   useEffect(() => {
     async function loadOrders() {
       try {
-        const userId = getUserIdFromToken();
         if(!userId) {
             return console.log('No user ID found in token.'); // Handle case where user ID is not available
         }
@@ -181,7 +183,7 @@ export default function OrderHistoryPage() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl mt-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">Order Details: {selectedOrder?._id}</DialogTitle>
             <DialogDescription>
@@ -196,7 +198,7 @@ export default function OrderHistoryPage() {
                     <CardTitle className="text-lg flex items-center gap-2"><CalendarDays size={18} /> Order Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <p><strong>Date:</strong> {selectedOrder.createdAt}</p>
+                    <p><strong>Date:</strong> {formatDate(selectedOrder.createdAt)}</p>
                     <div className="flex items-center text-sm"><strong className="mr-1">Status:</strong> <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>{selectedOrder.status}</Badge></div>
                     <p><strong>Total:</strong> <span className="font-semibold">{selectedOrder.total}</span></p>
                   </CardContent>
