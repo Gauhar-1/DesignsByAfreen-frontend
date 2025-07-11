@@ -80,9 +80,9 @@ export default function ForgotPasswordPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} />
+                        <Input type="tel" placeholder="e.g., 123-456-7890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
