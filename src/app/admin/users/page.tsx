@@ -18,7 +18,7 @@ import { adminNewUserSchema, type AdminNewUserInput, adminEditUserSchema, type A
 import { useToast } from '@/hooks/use-toast';
 import { fetchUsers, type User as ApiUserType } from '@/lib/api';
 import axios from 'axios';
-import { apiUrl } from '@/lib/utils';
+import { apiUrl, formatDate } from '@/lib/utils';
 
 const userRoles: ApiUserType['role'][] = ['Customer', 'Admin'];
 const userStatuses = ['Active', 'Blocked'];
@@ -215,7 +215,7 @@ export default function AdminUsersPage() {
                     <TableRow>
                       <TableHead className="w-12">Avatar</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined Date</TableHead>
@@ -224,7 +224,7 @@ export default function AdminUsersPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user.id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
+                      <TableRow key={user._id} className={user.isBlocked ? 'opacity-60 bg-muted/30' : ''}>
                         <TableCell>
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint || 'user avatar'} />
@@ -232,14 +232,14 @@ export default function AdminUsersPage() {
                           </Avatar>
                         </TableCell>
                         <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone}</TableCell>
                         <TableCell>
                           <Badge variant={user.role === 'Admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
                         </TableCell>
                         <TableCell>
                           {user.isBlocked ? (<Badge variant="destructive">Blocked</Badge>) : (<Badge variant="default">Active</Badge>)}
                         </TableCell>
-                        <TableCell>{user.joined}</TableCell>
+                        <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => handleToggleBlockUser(user.id, user.isBlocked)} title={user.isBlocked ? "Unblock User" : "Block User"} className={user.isBlocked ? "hover:text-green-600" : "hover:text-destructive"}>
                             {user.isBlocked ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
@@ -265,7 +265,7 @@ export default function AdminUsersPage() {
                           <h3 className="font-semibold">{user.name}</h3>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Mail className="h-3 w-3"/>
-                            {user.email}
+                            {user.phone}
                           </p>
                         </div>
                       </div>
@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground flex items-center gap-2"><CalendarDays className="h-4 w-4"/> Joined</span>
-                        <span>{user.joined}</span>
+                        <span>{formatDate(user.createdAt)}</span>
                       </div>
                     </CardContent>
                   </Card>

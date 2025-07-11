@@ -26,7 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type OrderShippingUpdateInput, orderShippingUpdateSchema } from '@/lib/schemas/orderSchemas';
 import { useToast } from '@/hooks/use-toast';
 import {  type Order as ApiOrderType } from '@/lib/api';
-import { apiUrl } from '@/lib/utils';
+import { apiUrl, formatDate } from '@/lib/utils';
 import axios from 'axios';
 
 const orderStatusOptions: ApiOrderType['status'][] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -259,7 +259,7 @@ export default function AdminOrdersPage() {
                       <TableRow key={order._id}>
                         <TableCell className="font-medium">{order.phone}</TableCell>
                         <TableCell>{order.customer}</TableCell>
-                        <TableCell>{order.createdAt}</TableCell>
+                        <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell>{order.total}</TableCell>
                         <TableCell> <Badge variant={getStatusBadgeVariant(order.status)}> {order.status} </Badge> </TableCell>
                         <TableCell> <Badge variant={getPaymentStatusBadgeVariant(order.paymentStatus)}> {order.paymentStatus} </Badge> </TableCell>
@@ -310,7 +310,7 @@ export default function AdminOrdersPage() {
                       <CardContent className="p-4 space-y-3">
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Date</span>
-                              <span>{order.createdAt}</span>
+                              <span>{formatDate(order.createdAt)}</span>
                           </div>
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Total</span>
@@ -376,7 +376,7 @@ export default function AdminOrdersPage() {
                     <CardTitle className="text-lg flex items-center gap-2"><CalendarDays size={18} /> Order Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <p><strong>Date:</strong> {selectedOrder.createdAt}</p>
+                    <p><strong>Date:</strong> {formatDate(selectedOrder.createdAt)}</p>
                     <div className="flex items-center text-sm"><strong className="mr-1">Status:</strong> <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>{selectedOrder.status}</Badge></div>
                     <p><strong>Total:</strong> <span className="font-semibold">{selectedOrder.total}</span></p>
                   </CardContent>

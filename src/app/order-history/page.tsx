@@ -135,7 +135,7 @@ export default function OrderHistoryPage() {
                   {orders.map((order) => (
                     <TableRow key={order._id}>
                       <TableCell className="font-medium">{order._id}</TableCell>
-                      <TableCell>{order.createdAt}</TableCell>
+                      <TableCell>{formatDate(order.createdAt)}</TableCell>
                       <TableCell>{order.total}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
@@ -159,7 +159,7 @@ export default function OrderHistoryPage() {
                   <CardHeader className="flex flex-row items-center justify-between p-4 bg-muted/30">
                     <div>
                       <h3 className="font-semibold">{order._id}</h3>
-                      <p className="text-sm text-muted-foreground">{order.createdAt}</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</p>
                     </div>
                      <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
                   </CardHeader>
@@ -183,11 +183,11 @@ export default function OrderHistoryPage() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl mt-6 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl mt-8 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">Order Details: {selectedOrder?._id}</DialogTitle>
             <DialogDescription>
-              Viewing full details for your order placed on {selectedOrder?.createdAt}.
+              Viewing full details for your order placed on {formatDate(selectedOrder?.createdAt || "")}.
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (

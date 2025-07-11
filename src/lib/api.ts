@@ -50,6 +50,7 @@ export interface Order {
 }
 
 export interface User {
+  createdAt: string | Date;
   timestamps: ReactNode;
   phone: ReactNode;
   _id: Key | null | undefined;
