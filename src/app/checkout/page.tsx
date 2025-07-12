@@ -22,6 +22,7 @@ import { fetchCartItems, type CartItem as ApiCartItem } from '@/lib/api';
 import { getUserIdFromToken } from '@/lib/auth';
 import axios from 'axios';
 import { apiUrl } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 const addressFormSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
@@ -50,18 +51,10 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<ApiCartItem[]>([]);
   const [isLoadingCart, setIsLoadingCart] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [ prices, setPrices ] = useState(0);
+  const { userId } = useAuth();
 
-  useEffect(() => {
-       const id = getUserIdFromToken();
-       if (id) { 
-         setUserId(id)
-       }
-       else{
-         console.log('User ID not found in token');
-       }
-     }, []);
+ 
 
   useEffect(() => {
      if (!userId) return;
@@ -98,12 +91,20 @@ export default function CheckoutPage() {
         return;
       }
       try {
-        const dataUri = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject; reader.readAsDataURL(file);
-        });
-        form.setValue('paymentScreenshotUri', dataUri, { shouldValidate: true });
+        const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'designsByAfreen'); // <-- your upload preset
+
+    const res = await axios.post('https://api.cloudinary.com/v1_1/dccklqtaw/image/upload', formData);
+
+    const data =  res.data;
+
+    if (data.secure_url) {
+       form.setValue('paymentScreenshotUri', data.secure_url, { shouldValidate: true });
+      console.log('Image uploaded successfully:', data.secure_url);
+    } else {
+      throw new Error('Image upload failed');
+    }
       } catch (error) {
         form.setValue('paymentScreenshotUri', undefined, { shouldValidate: true });
         if (event.target) event.target.value = '';
