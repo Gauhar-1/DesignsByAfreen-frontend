@@ -7,11 +7,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { apiUrl, cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product as ApiProductType } from '@/lib/api'; // Use Product from api.ts
 import axios from 'axios';
 import { getUserIdFromToken } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProductCardProps {
   product: ApiProductType;
@@ -21,7 +22,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, className }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { toast } = useToast();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, isLoggedIn } = useAuth();
 
   const handleWishlistToggle = () => {
     setIsWishlisted(!isWishlisted);
@@ -31,17 +32,15 @@ export default function ProductCard({ product, className }: ProductCardProps) {
     });
   };
 
-  useEffect(() => {
-    const id = getUserIdFromToken();
-    if (id) { 
-      setUserId(id)
-    }
-    else{
-      console.log('User ID not found in token');
-    }
-  }, []);
-
   const handleAddToCart = async () => {
+  if (!isLoggedIn) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in to add items to your cart.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
      const response = await axios.post(`${apiUrl}/cart`, {
         productId: product._id,

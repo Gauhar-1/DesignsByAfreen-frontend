@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { Instagram, Twitter, Facebook, Shield } from 'lucide-react';
 import Logo from '@/components/icons/Logo';
 import Container from '@/components/layout/Container';
-import { useEffect, useState } from 'react';
-import { getUserRoleFromToken } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Footer() {
